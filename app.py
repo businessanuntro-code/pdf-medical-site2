@@ -9,7 +9,6 @@ from parser.analyzer import analyze_extracted_folder
 from parser.article_detector import detect_articles
 
 
-
 app = Flask(__name__)
 
 app.secret_key = "pdf-medical-site-secret-key"
@@ -19,7 +18,7 @@ app.config["UPLOAD_FOLDER"] = config.UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = config.MAX_CONTENT_LENGTH
 
 
-
+# Creare foldere necesare
 for folder in [
     config.UPLOAD_FOLDER,
     config.EXTRACT_FOLDER,
@@ -28,7 +27,6 @@ for folder in [
     config.DATABASE_FOLDER
 ]:
     os.makedirs(folder, exist_ok=True)
-
 
 
 
@@ -42,18 +40,23 @@ def allowed_file(filename):
 
 
 
-
-
 def find_html_folder(base_folder):
+    """
+    Găsește folderul real care conține paginile revistei.
+    Caută folderul care are publication.html.
+    """
 
     for root, dirs, files in os.walk(base_folder):
 
         html_files = [
-            f for f in files
+            f.lower()
+            for f in files
             if f.lower().endswith(".html")
         ]
 
-        if html_files:
+
+        if "publication.html" in html_files:
+
             return root
 
 
@@ -110,7 +113,7 @@ def upload():
 
         if not allowed_file(file.filename):
 
-            flash("Este permis doar ZIP.")
+            flash("Este permis doar formatul ZIP.")
 
             return redirect(request.url)
 
@@ -126,12 +129,12 @@ def upload():
         )
 
 
+        # Salvare ZIP
         file.save(zip_path)
 
 
 
         # 1. Dezarhivare
-
         extract_path = extract_zip(
             zip_path,
             config.EXTRACT_FOLDER
@@ -139,8 +142,7 @@ def upload():
 
 
 
-        # 2. Detectare folder HTML
-
+        # 2. Găsim folderul HTML real
         html_folder = find_html_folder(
             extract_path
         )
@@ -148,15 +150,18 @@ def upload():
 
 
         # 3. Analiză structură
-
         analysis = analyze_extracted_folder(
             extract_path
         )
 
 
+        if html_folder:
 
-        # 4. Grupare articole
+            analysis["html_folder"] = html_folder
 
+
+
+        # 4. Detectare articole
         articles = []
 
 
@@ -192,7 +197,7 @@ def upload():
 @app.errorhandler(404)
 def page_not_found(error):
 
-    return render_template("404.html"),404
+    return render_template("404.html"), 404
 
 
 
