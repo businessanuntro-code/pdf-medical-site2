@@ -4,6 +4,85 @@
 
 <h2>Upload revistă</h2>
 
-<p>Momentan pagina este în construcție.</p>
+<p>
+    Încarcă arhiva ZIP a revistei pentru procesare automată.
+</p>
+
+<form method="POST" enctype="multipart/form-data">
+
+    <div>
+        <label for="revista">
+            Selectează arhiva ZIP:
+        </label>
+    </div>
+
+    <br>
+
+    <input 
+        type="file" 
+        id="revista" 
+        name="revista"
+        accept=".zip"
+        required
+    >
+
+    <br><br>
+
+    <button type="submit">
+        Încarcă revista
+    </button>
+
+</form>
+
+
+{% if uploaded %}
+
+<hr>
+
+<h3>✔ Arhivă încărcată cu succes</h3>
+
+<p>
+    Fișier:
+    <strong>{{ filename }}</strong>
+</p>
+
+<p>
+    Status:
+    <strong>Pregătire procesare...</strong>
+</p>
+
+<div>
+    ✔ Arhivă primită
+</div>
+
+<div>
+    ⏳ Analizare fișiere...
+</div>
+
+<div>
+    ⏳ Detectare structură revistă...
+</div>
+
+{% endif %}
+
+
+{% with messages = get_flashed_messages() %}
+
+{% if messages %}
+
+<hr>
+
+{% for message in messages %}
+
+<p>
+    ⚠ {{ message }}
+</p>
+
+{% endfor %}
+
+{% endif %}
+
+{% endwith %}
+
 
 {% endblock %}
