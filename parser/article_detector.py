@@ -4,9 +4,6 @@ from bs4 import BeautifulSoup
 
 
 def get_html_files(html_folder):
-    """
-    Returnează paginile HTML în ordinea corectă.
-    """
 
     files = []
 
@@ -29,7 +26,6 @@ def get_html_files(html_folder):
             re.IGNORECASE
         )
 
-
         if match:
             return int(match.group(1))
 
@@ -37,69 +33,40 @@ def get_html_files(html_folder):
         return 999999
 
 
-    return sorted(
-        files,
-        key=sort_key
-    )
+    return sorted(files, key=sort_key)
 
 
 
 def extract_title(html_path):
-    """
-    Extrage titlul articolului.
-    
-    Prima prioritate:
-    id="_idTextSpan001"
-
-    """
 
     with open(
         html_path,
         "r",
         encoding="utf-8",
         errors="ignore"
-    ) as file:
+    ) as f:
 
-        content = file.read()
-
-
-
-    soup = BeautifulSoup(
-        content,
-        "html.parser"
-    )
-
-
-
-    # Titlul principal
-    title_element = soup.find(
-        id="_idTextSpan001"
-    )
-
-
-    if title_element:
-
-        return title_element.get_text(
-            " ",
-            strip=True
+        soup = BeautifulSoup(
+            f.read(),
+            "html.parser"
         )
 
 
-
-    # Titlurile următoare
-    title_element = soup.find(
+    # Titlul real
+    title = soup.find(
         "p",
-        class_="TITLU ParaOverride-1"
+        class_=lambda x: x and "TITLU" in x
     )
 
 
-    if title_element:
+    if title:
 
-        return title_element.get_text(
+        text = title.get_text(
             " ",
             strip=True
         )
 
+        return text
 
 
     return None
@@ -108,10 +75,6 @@ def extract_title(html_path):
 
 
 def detect_articles(html_folder):
-
-    """
-    Grupează paginile HTML în articole.
-    """
 
     html_files = get_html_files(
         html_folder
@@ -123,25 +86,24 @@ def detect_articles(html_folder):
     current_article = None
 
 
+
     for filename in html_files:
 
 
-        full_path = os.path.join(
+        path = os.path.join(
             html_folder,
             filename
         )
 
 
         title = extract_title(
-            full_path
+            path
         )
 
 
-        # Dacă găsim titlu nou
         if title:
 
 
-            # închidem articolul anterior
             if current_article:
 
                 articles.append(
@@ -151,7 +113,7 @@ def detect_articles(html_folder):
 
             current_article = {
 
-                "id": len(articles) + 1,
+                "id": len(articles)+1,
 
                 "title": title,
 
@@ -164,7 +126,6 @@ def detect_articles(html_folder):
 
         else:
 
-            # pagina continuă articolul curent
 
             if current_article:
 
@@ -174,7 +135,6 @@ def detect_articles(html_folder):
 
 
 
-    # ultimul articol
     if current_article:
 
         articles.append(
