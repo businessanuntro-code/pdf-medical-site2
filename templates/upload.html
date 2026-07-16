@@ -4,28 +4,18 @@
 
 <h2>Upload revistă</h2>
 
+
+{% if not uploaded %}
+
 <p>
-    Încarcă arhiva ZIP a revistei pentru procesare automată.
+    Încarcă arhiva ZIP a revistei pentru analiză.
 </p>
 
 
-<form 
-    method="POST" 
-    enctype="multipart/form-data"
-    id="uploadForm"
->
-
-    <div>
-        <label for="revista">
-            Selectează arhiva ZIP:
-        </label>
-    </div>
-
-    <br>
+<form method="POST" enctype="multipart/form-data">
 
     <input 
         type="file" 
-        id="revista" 
         name="revista"
         accept=".zip"
         required
@@ -33,55 +23,14 @@
 
     <br><br>
 
-    <button 
-        type="submit"
-        id="uploadButton"
-    >
+    <button type="submit">
         Încarcă revista
     </button>
 
 </form>
 
 
-<div 
-    id="processing"
-    style="
-        display:none;
-        margin-top:30px;
-    "
->
-
-<hr>
-
-<h3>
-    🔄 Procesare în curs...
-</h3>
-
-
-<div class="loader"></div>
-
-
-<div class="steps">
-
-<p id="step1">
-    ⏳ Arhivă încărcată
-</p>
-
-<p id="step2">
-    ⏳ Analizare fișiere...
-</p>
-
-<p id="step3">
-    ⏳ Detectare structură revistă...
-</p>
-
-<p id="step4">
-    ⏳ Pregătire procesare articole...
-</p>
-
-</div>
-
-</div>
+{% endif %}
 
 
 
@@ -100,21 +49,83 @@
 </p>
 
 
-<div class="steps">
+<h3>
+    Analiză arhivă
+</h3>
+
 
 <p>
-    ✔ Arhivă primită
+    ✔ {{ analysis.files_count }} fișiere găsite
+</p>
+
+
+
+{% if analysis.html_folder %}
+
+<p>
+    ✔ Folder HTML detectat:
+    <strong>{{ analysis.html_folder }}</strong>
+</p>
+
+{% else %}
+
+<p>
+    ⚠ Folder HTML nu a fost identificat
+</p>
+
+{% endif %}
+
+
+
+{% if analysis.articles %}
+
+<p>
+    ✔ {{ analysis.articles|length }} articole identificate
+</p>
+
+
+<ul>
+
+{% for article in analysis.articles %}
+
+<li>
+    {{ article }}
+</li>
+
+{% endfor %}
+
+</ul>
+
+
+{% else %}
+
+<p>
+    ⚠ Nu au fost identificate articole.
+</p>
+
+{% endif %}
+
+
+
+<hr>
+
+
+<h3>
+    Etape următoare
+</h3>
+
+
+<p>
+    ⏳ Dezarhivare conținut...
 </p>
 
 <p>
-    🔄 Analizare fișiere...
+    ⏳ Curățare HTML...
 </p>
 
 <p>
-    ⏳ Detectare structură revistă...
+    ⏳ Generare pagini...
 </p>
-
-</div>
 
 
 {% endif %}
@@ -139,78 +150,6 @@
 
 {% endwith %}
 
-
-
-<style>
-
-.loader {
-
-    width:40px;
-    height:40px;
-
-    border:5px solid #ddd;
-    border-top:5px solid #333;
-
-    border-radius:50%;
-
-    animation:spin 1s linear infinite;
-
-    margin:20px 0;
-
-}
-
-
-@keyframes spin {
-
-    from {
-        transform:rotate(0deg);
-    }
-
-    to {
-        transform:rotate(360deg);
-    }
-
-}
-
-
-.steps p {
-
-    font-size:16px;
-    margin:8px 0;
-
-}
-
-</style>
-
-
-
-<script>
-
-document
-.getElementById("uploadForm")
-.addEventListener(
-"submit",
-function(){
-
-    document
-    .getElementById("processing")
-    .style.display="block";
-
-
-    document
-    .getElementById("uploadButton")
-    .disabled=true;
-
-
-    document
-    .getElementById("uploadButton")
-    .innerHTML=
-    "Se procesează...";
-
-});
-
-
-</script>
 
 
 {% endblock %}
