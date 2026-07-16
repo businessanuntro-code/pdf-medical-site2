@@ -9,3 +9,5 @@ OUTPUT_FOLDER = os.path.join(BASE_DIR, "output")
 DATABASE_FOLDER = os.path.join(BASE_DIR, "database")
 
 ALLOWED_EXTENSIONS = {"zip"}
+
+MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500 MB
