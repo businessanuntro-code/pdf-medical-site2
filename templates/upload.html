@@ -8,7 +8,12 @@
     Încarcă arhiva ZIP a revistei pentru procesare automată.
 </p>
 
-<form method="POST" enctype="multipart/form-data">
+
+<form 
+    method="POST" 
+    enctype="multipart/form-data"
+    id="uploadForm"
+>
 
     <div>
         <label for="revista">
@@ -28,42 +33,92 @@
 
     <br><br>
 
-    <button type="submit">
+    <button 
+        type="submit"
+        id="uploadButton"
+    >
         Încarcă revista
     </button>
 
 </form>
 
 
+<div 
+    id="processing"
+    style="
+        display:none;
+        margin-top:30px;
+    "
+>
+
+<hr>
+
+<h3>
+    🔄 Procesare în curs...
+</h3>
+
+
+<div class="loader"></div>
+
+
+<div class="steps">
+
+<p id="step1">
+    ⏳ Arhivă încărcată
+</p>
+
+<p id="step2">
+    ⏳ Analizare fișiere...
+</p>
+
+<p id="step3">
+    ⏳ Detectare structură revistă...
+</p>
+
+<p id="step4">
+    ⏳ Pregătire procesare articole...
+</p>
+
+</div>
+
+</div>
+
+
+
 {% if uploaded %}
 
 <hr>
 
-<h3>✔ Arhivă încărcată cu succes</h3>
+<h3>
+    ✔ Arhivă încărcată cu succes
+</h3>
+
 
 <p>
     Fișier:
     <strong>{{ filename }}</strong>
 </p>
 
+
+<div class="steps">
+
 <p>
-    Status:
-    <strong>Pregătire procesare...</strong>
+    ✔ Arhivă primită
 </p>
 
-<div>
-    ✔ Arhivă primită
-</div>
+<p>
+    🔄 Analizare fișiere...
+</p>
 
-<div>
-    ⏳ Analizare fișiere...
-</div>
-
-<div>
+<p>
     ⏳ Detectare structură revistă...
+</p>
+
 </div>
+
 
 {% endif %}
+
 
 
 {% with messages = get_flashed_messages() %}
@@ -83,6 +138,79 @@
 {% endif %}
 
 {% endwith %}
+
+
+
+<style>
+
+.loader {
+
+    width:40px;
+    height:40px;
+
+    border:5px solid #ddd;
+    border-top:5px solid #333;
+
+    border-radius:50%;
+
+    animation:spin 1s linear infinite;
+
+    margin:20px 0;
+
+}
+
+
+@keyframes spin {
+
+    from {
+        transform:rotate(0deg);
+    }
+
+    to {
+        transform:rotate(360deg);
+    }
+
+}
+
+
+.steps p {
+
+    font-size:16px;
+    margin:8px 0;
+
+}
+
+</style>
+
+
+
+<script>
+
+document
+.getElementById("uploadForm")
+.addEventListener(
+"submit",
+function(){
+
+    document
+    .getElementById("processing")
+    .style.display="block";
+
+
+    document
+    .getElementById("uploadButton")
+    .disabled=true;
+
+
+    document
+    .getElementById("uploadButton")
+    .innerHTML=
+    "Se procesează...";
+
+});
+
+
+</script>
 
 
 {% endblock %}
