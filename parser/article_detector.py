@@ -3,6 +3,7 @@ import re
 from bs4 import BeautifulSoup
 
 
+
 def get_html_files(html_folder):
 
     files = []
@@ -12,6 +13,7 @@ def get_html_files(html_folder):
         if file.lower().endswith(".html"):
 
             files.append(file)
+
 
 
     def sort_key(filename):
@@ -26,6 +28,7 @@ def get_html_files(html_folder):
             re.IGNORECASE
         )
 
+
         if match:
             return int(match.group(1))
 
@@ -33,11 +36,20 @@ def get_html_files(html_folder):
         return 999999
 
 
-    return sorted(files, key=sort_key)
+
+    return sorted(
+        files,
+        key=sort_key
+    )
 
 
 
-def extract_title(html_path):
+
+def extract_editorial_title(html_path):
+
+    """
+    Caz special pentru publication.html
+    """
 
     with open(
         html_path,
@@ -52,21 +64,23 @@ def extract_title(html_path):
         )
 
 
-    # Titlul real
-    title = soup.find(
-        "p",
-        class_=lambda x: x and "TITLU" in x
+    span = soup.find(
+        id="_idTextSpan001"
     )
 
 
-    if title:
+    if span:
 
-        text = title.get_text(
-            " ",
-            strip=True
-        )
+        parent = span.find_parent("p")
 
-        return text
+        if parent:
+
+            text = parent.get_text(
+                " ",
+                strip=True
+            )
+
+            return text
 
 
     return None
@@ -74,7 +88,51 @@ def extract_title(html_path):
 
 
 
+
+def extract_article_title(html_path):
+
+    """
+    Caută titlu normal articol
+    """
+
+    with open(
+        html_path,
+        "r",
+        encoding="utf-8",
+        errors="ignore"
+    ) as f:
+
+        soup = BeautifulSoup(
+            f.read(),
+            "html.parser"
+        )
+
+
+
+    title = soup.find(
+        "p",
+        class_=lambda classes:
+            classes and
+            "TITLU" in classes
+    )
+
+
+    if title:
+
+        return title.get_text(
+            " ",
+            strip=True
+        )
+
+
+    return None
+
+
+
+
+
 def detect_articles(html_folder):
+
 
     html_files = get_html_files(
         html_folder
@@ -96,9 +154,24 @@ def detect_articles(html_folder):
         )
 
 
-        title = extract_title(
-            path
-        )
+        title = None
+
+
+
+        # primul fisier = editorial
+        if filename.lower() == "publication.html":
+
+            title = extract_editorial_title(
+                path
+            )
+
+
+        else:
+
+            title = extract_article_title(
+                path
+            )
+
 
 
         if title:
@@ -109,6 +182,7 @@ def detect_articles(html_folder):
                 articles.append(
                     current_article
                 )
+
 
 
             current_article = {
@@ -122,6 +196,7 @@ def detect_articles(html_folder):
                 ]
 
             }
+
 
 
         else:
@@ -140,6 +215,7 @@ def detect_articles(html_folder):
         articles.append(
             current_article
         )
+
 
 
     return articles
