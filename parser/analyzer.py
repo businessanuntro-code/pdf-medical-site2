@@ -1,63 +1,58 @@
 import os
-import zipfile
 
 
-def analyze_zip(zip_path):
+def find_html_folder(base_folder):
     """
-    Analizează arhiva revistei și returnează informații despre conținut.
+    Caută automat folderul care conține pagini HTML.
+    """
+
+    for root, dirs, files in os.walk(base_folder):
+
+        html_files = [
+            f for f in files
+            if f.lower().endswith(".html")
+        ]
+
+
+        if html_files:
+
+            return root
+
+
+    return None
+
+
+
+def analyze_extracted_folder(extracted_folder):
+
+    """
+    Analizează conținutul dezarhivat.
     """
 
     result = {
+
         "files_count": 0,
+
         "html_folder": None,
-        "articles": []
+
     }
 
 
-    if not os.path.exists(zip_path):
-        return result
+    for root, dirs, files in os.walk(extracted_folder):
 
-
-    with zipfile.ZipFile(zip_path, "r") as archive:
-
-        files = archive.namelist()
-
-
-        # Număr total fișiere
-        result["files_count"] = len(files)
+        result["files_count"] += len(files)
 
 
 
-        # Detectare folder html
-        for file in files:
-
-            normalized = file.lower()
-
-            if "/html/" in normalized or normalized.startswith("html/"):
-
-                result["html_folder"] = "html"
-                break
+    html_folder = find_html_folder(
+        extracted_folder
+    )
 
 
+    if html_folder:
 
-        # Detectare articole publication-1, publication-2 etc.
-        articles = set()
+        result["html_folder"] = html_folder
 
-
-        for file in files:
-
-            parts = file.split("/")
-
-
-            for part in parts:
-
-                if part.lower().startswith("publication-"):
-
-                    articles.add(part)
-
-
-
-        result["articles"] = sorted(list(articles))
 
 
     return result
