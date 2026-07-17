@@ -7,8 +7,14 @@ def linkify(text):
                   lambda m:f'<a href="{"https://"+m.group(0) if m.group(0).startswith("www.") else m.group(0)}" target="_blank">{m.group(0)}</a>',text)
 
 def superscript_refs(text):
-    if not text:return ""
-    return re.sub(r'\((\d+(?:\s*,\s*\d+)*)\)',lambda m:f"<sup>{m.group(1).replace(', ',',').replace(',',', ')}</sup>",text)
+    if not text:
+        return ""
+
+    return re.sub(
+        r'\((\d+(?:\s*,\s*\d+)*)\)',
+        lambda m: f"({m.group(1).replace(', ',',').replace(',',', ')})",
+        text
+    )
 
 def superscript_symbols(text):
     return text.replace("™","<sup>™</sup>").replace("®","<sup>®</sup>") if text else ""
