@@ -35,7 +35,13 @@ def format_content(text):
 
     text = text.replace("\u2029", "\n")
 
-    text = re.sub(r"<Lbl>.*?</Lbl>", "&#8226; ", text, flags=re.I | re.S)
+    # transformă elementele de listă în bullet + text
+    text = re.sub(
+    r"<LI>\s*<Lbl>.*?</Lbl>\s*<LBody>(.*?)</LBody>\s*</LI>",
+    r"&#8226; \1",
+    text,
+    flags=re.I | re.S
+    )
 
     lines = [x.strip() for x in text.splitlines() if x.strip()]
 
