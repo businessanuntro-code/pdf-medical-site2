@@ -134,46 +134,11 @@ def build_html(data):
 
     return f"""<!DOCTYPE html>
 <html lang="ro">
+
 <head>
 <meta charset="utf-8">
 <title>{data.get('titlu','Articol')}</title>
-
-<style>
-
-body {
-    margin: 0;
-    padding: 0;
-    background: #f2f2f2;
-    font-family: Arial, sans-serif;
-}
-
-body > * {
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-body {
-    padding-left: 40px;
-    padding-right: 40px;
-}
-
-h1 {
-    margin-top: 40px;
-    text-align: center;
-}
-
-h2 {
-    margin-top: 30px;
-}
-
-p {
-    line-height: 1.6;
-    text-align: justify;
-}
-
-</style>
-
+<link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
