@@ -43,6 +43,22 @@ def format_content(text):
     flags=re.I | re.S
     )
 
+    # Intertitlu -> bold
+    text = re.sub(
+    r"<Intertitlu>(.*?)</Intertitlu>",
+    r"\n<strong>\1</strong>\n",
+    text,
+    flags=re.I | re.S
+    )
+
+    # Sub_Intertitlu -> bold + italic
+    text = re.sub(
+    r"<Sub_Intertitlu>(.*?)</Sub_Intertitlu>",
+    r"\n<strong><i>\1</i></strong>\n",
+    text,
+    flags=re.I | re.S
+    )
+
     lines = [x.strip() for x in text.splitlines() if x.strip()]
 
     html = []
@@ -64,7 +80,21 @@ def format_content(text):
         if 1 <= words <= 8 and next_long:
             html.append(f"<p><strong>{processed}</strong></p>")
         else:
-            html.append(f"<p>{processed}</p>")
+            # dacă linia este deja formatată ca titlu, nu mai aplica alte reguli
+if processed.startswith("<strong>"):
+    html.append(f"<p>{processed}</p>")
+else:
+    clean = re.sub(r"<[^>]+>", "", processed)
+    words = len(clean.split())
+
+    next_long = False
+    if i + 1 < len(lines):
+        next_long = len(lines[i + 1].split()) > 8
+
+    if 1 <= words <= 8 and next_long:
+        html.append(f"<p><strong>{processed}</strong></p>")
+    else:
+        html.append(f"<p>{processed}</p>")
 
     return "\n".join(html)
 
