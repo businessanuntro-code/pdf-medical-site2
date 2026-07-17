@@ -80,19 +80,9 @@ def format_content(text):
         if 1 <= words <= 8 and next_long:
             html.append(f"<p><strong>{processed}</strong></p>")
         else:
-            # dacă linia este deja formatată ca titlu, nu mai aplica alte reguli
-if processed.startswith("<strong>"):
-    html.append(f"<p>{processed}</p>")
-else:
-    clean = re.sub(r"<[^>]+>", "", processed)
-    words = len(clean.split())
 
-    next_long = False
-    if i + 1 < len(lines):
-        next_long = len(lines[i + 1].split()) > 8
-
-    if 1 <= words <= 8 and next_long:
-        html.append(f"<p><strong>{processed}</strong></p>")
+            html.append(f"<p>{processed}</p>")
+            
     else:
         html.append(f"<p>{processed}</p>")
 
