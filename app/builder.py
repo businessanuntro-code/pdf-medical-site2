@@ -35,6 +35,14 @@ def format_content(text):
 
     text = text.replace("\u2029", "\n")
 
+    # înlocuiește markerul de listă cu bullet HTML
+text = re.sub(
+    r"<Lbl>\s*.*?\s*</Lbl>",
+    "&#8226; ",
+    text,
+    flags=re.I | re.S
+)
+
     lines = [x.strip() for x in text.splitlines() if x.strip()]
 
     html = []
