@@ -10,26 +10,27 @@ def superscript_refs(text):
     if not text:
         return ""
 
-    # conversie cifre normale -> superscript Unicode
     sup_map = str.maketrans(
         "0123456789",
         "⁰¹²³⁴⁵⁶⁷⁸⁹"
     )
 
-    # transformă <sup>1</sup>, <sup>2,3</sup> etc.
     def convert(match):
-        value = match.group(1)
-        value = value.replace(",", "").replace(" ", "")
-        return f"({value.translate(sup_map)})"
+        numbers = match.group(1)
+
+        # elimină virgule și spații între numere
+        numbers = numbers.replace(",", "").replace(" ", "")
+
+        return "(" + numbers.translate(sup_map) + ")"
 
     text = re.sub(
-        r"<sup>(.*?)</sup>",
+        r'\((\d+(?:\s*,\s*\d+)*)\)',
         convert,
-        text,
-        flags=re.I | re.S
+        text
     )
 
     return text
+
 
 def superscript_symbols(text):
     return text.replace("™","<sup>™</sup>").replace("®","<sup>®</sup>") if text else ""
