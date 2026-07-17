@@ -10,26 +10,14 @@ def superscript_refs(text):
     if not text:
         return ""
 
-    sup_map = str.maketrans(
-        "0123456789",
-        "⁰¹²³⁴⁵⁶⁷⁸⁹"
-    )
-
     def convert(match):
-        numbers = match.group(1)
+        return f"<sup>{match.group(0)}</sup>"
 
-        # elimină virgule și spații între numere
-        numbers = numbers.replace(",", "").replace(" ", "")
-
-        return "(" + numbers.translate(sup_map) + ")"
-
-    text = re.sub(
-        r'\((\d+(?:\s*,\s*\d+)*)\)',
+    return re.sub(
+        r'\(\d+(?:\s*,\s*\d+)*\)',
         convert,
         text
     )
-
-    return text
 
 
 def superscript_symbols(text):
