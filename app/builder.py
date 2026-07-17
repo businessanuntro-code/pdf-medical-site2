@@ -17,8 +17,48 @@ def render_image(url):
     return f'<figure class="img-figure"><img src="{url}" class="article-image"/></figure>'
 
 def format_content(text):
-    if not text:return ""
-    return text
+
+    if not text:
+        return ""
+
+    # elimină tagurile XML pe care nu vrem să le afișăm
+    text = re.sub(r"</?(ContinutArticol|continut_articol|body)[^>]*>", "", text, flags=re.I)
+
+    # elimină tabelele
+    text = re.sub(r"<table.*?</table>", "", text, flags=re.I | re.S)
+
+    # elimină figurile
+    text = re.sub(r"<figure.*?</figure>", "", text, flags=re.I | re.S)
+
+    # elimină orice tag imagine XML
+    text = re.sub(r"<imagine\d+[^>]*\/?>", "", text, flags=re.I)
+
+    text = text.replace("\u2029", "\n")
+
+    lines = [x.strip() for x in text.splitlines() if x.strip()]
+
+    html = []
+
+    for i, line in enumerate(lines):
+
+        processed = linkify(line)
+        processed = superscript_refs(processed)
+        processed = superscript_symbols(processed)
+
+        clean = re.sub(r"<[^>]+>", "", processed)
+        words = len(clean.split())
+
+        next_long = False
+        if i + 1 < len(lines):
+            next_long = len(lines[i + 1].split()) > 8
+
+        # titluri de capitole/subcapitole
+        if 1 <= words <= 8 and next_long:
+            html.append(f"<p><strong>{processed}</strong></p>")
+        else:
+            html.append(f"<p>{processed}</p>")
+
+    return "\n".join(html)
 
 def format_bibliography(text):
     if not text:return ""
