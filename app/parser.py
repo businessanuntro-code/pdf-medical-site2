@@ -123,3 +123,5 @@ for elem in root.iter():
             refs.append(txt)
 
 data["bibliografie"] = "\n".join(refs)
+
+return data
