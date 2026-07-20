@@ -103,32 +103,23 @@ def parse_xml(path):
     # BIBLIOGRAFIE
     # =====================================================
 
-    collecting = False
-    refs = []
+refs = []
 
-    for story in stories:
+# Cautam direct toate LBody din bibliografie
+bibliografie_start = False
 
-        xml = etree.tostring(story, encoding="unicode")
+for elem in root.iter():
 
-        if "<_No_paragraph_style_>Bibliografie</_No_paragraph_style_>" in xml:
-            collecting = True
-            continue
+    if elem.tag == "_No_paragraph_style_" and _text(elem) == "Bibliografie":
+        bibliografie_start = True
+        continue
 
-        if not collecting:
-            continue
+    if not bibliografie_start:
+        continue
 
-        if "<Sect>" in xml:
-            break
+    if elem.tag == "LBody":
+        txt = _text(elem)
+        if txt:
+            refs.append(txt)
 
-        if "<LBody>" in xml:
-
-            node = etree.fromstring(xml)
-
-            for ref in node.findall(".//LBody"):
-                txt = _text(ref)
-                if txt:
-                    refs.append(txt)
-
-    data["bibliografie"] = "\n".join(refs)
-
-    return data
+data["bibliografie"] = "\n".join(refs)
