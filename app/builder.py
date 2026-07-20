@@ -196,6 +196,7 @@ def build_html(data):
         )
     )
 
+    print(data["bibliografie"])
     return f"""<!DOCTYPE html>
 <html lang="ro">
 
