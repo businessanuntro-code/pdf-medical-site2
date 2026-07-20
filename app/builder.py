@@ -44,7 +44,12 @@ def format_content(text):
         return ""
 
     # elimină tagurile XML pe care nu vrem să le afișăm
-    text = re.sub(r"</?(ContinutArticol|continut_articol|body)[^>]*>", "", text, flags=re.I)
+    text = re.sub(
+        r"</?(ContinutArticol|continut_articol|body)[^>]*>",
+        "",
+        text,
+        flags=re.I
+    )
 
     # elimină tabelele
     text = re.sub(r"<table.*?</table>", "", text, flags=re.I | re.S)
@@ -57,29 +62,66 @@ def format_content(text):
 
     text = text.replace("\u2029", "\n")
 
-    # transformă elementele de listă în bullet + text
+    # ==========================
+    # LISTE (<LBody>) - FARA BOLD
+    # ==========================
     text = re.sub(
-    r"<LI>\s*<Lbl>.*?</Lbl>\s*<LBody>(.*?)</LBody>\s*</LI>",
-    r"&#8226; \1",
-    text,
-    flags=re.I | re.S
+        r"<LI>\s*<Lbl>.*?</Lbl>\s*<LBody>(.*?)</LBody>\s*</LI>",
+        r"\n__LBODY__&#8226; \1\n",
+        text,
+        flags=re.I | re.S
     )
 
     # Intertitlu -> bold
     text = re.sub(
-    r"<Intertitlu>(.*?)</Intertitlu>",
-    r"\n<strong>\1</strong>\n",
-    text,
-    flags=re.I | re.S
+        r"<Intertitlu>(.*?)</Intertitlu>",
+        r"\n<strong>\1</strong>\n",
+        text,
+        flags=re.I | re.S
     )
 
     # Sub_Intertitlu -> bold + italic
     text = re.sub(
-    r"<Sub_Intertitlu>(.*?)</Sub_Intertitlu>",
-    r"\n<strong><i>\1</i></strong>\n",
-    text,
-    flags=re.I | re.S
+        r"<Sub_Intertitlu>(.*?)</Sub_Intertitlu>",
+        r"\n<strong><i>\1</i></strong>\n",
+        text,
+        flags=re.I | re.S
     )
+
+    lines = [x.strip() for x in text.splitlines() if x.strip()]
+
+    html = []
+
+    for i, line in enumerate(lines):
+
+        # verificăm dacă provine din LBody
+        is_lbody = line.startswith("__LBODY__")
+        if is_lbody:
+            line = line.replace("__LBODY__", "", 1)
+
+        processed = linkify(line)
+        processed = superscript_refs(processed)
+        processed = superscript_symbols(processed)
+
+        clean = re.sub(r"<[^>]+>", "", processed)
+        words = len(clean.split())
+
+        next_long = False
+        if i + 1 < len(lines):
+            next_clean = re.sub(r"<[^>]+>", "", lines[i + 1].replace("__LBODY__", ""))
+            next_long = len(next_clean.split()) > 8
+
+        # dacă vine din LBody NU îi aplicăm bold automat
+        if is_lbody:
+            html.append(f"<p>{processed}</p>")
+
+        elif 1 <= words <= 8 and next_long:
+            html.append(f"<p><strong>{processed}</strong></p>")
+
+        else:
+            html.append(f"<p>{processed}</p>")
+
+    return "\n".join(html)
 
     
 
