@@ -19,6 +19,7 @@ def superscript_refs(text):
         text
     )
 
+# Adauga superscript zona de Autori
 def superscript_author_refs(text):
     if not text:
         return ""
@@ -26,12 +27,13 @@ def superscript_author_refs(text):
     trans = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 
     def convert(match):
-        return "<sup>" + match.group(1).translate(trans) + "</sup>"
+        nums = match.group(1).translate(trans)
+        return f"<sup>{nums}</sup>"
 
     return re.sub(
-        r'(\d+(?:,\d+)*)$',
+        r'([0-9]+(?:,[0-9]+)*)(?=,?\s+[A-ZĂÂÎȘȚ]|$)',
         convert,
-        text.strip()
+        text
     )
 
 def superscript_symbols(text):
@@ -160,7 +162,7 @@ def build_html(data):
 <h1>{data.get('titlu','')}</h1>
 <h2>{data.get('english_title','')}</h2>
 
-<div><b>Autori:</b> {superscript_author_refs(data.get('autor',''))}</div>
+<div><b>Autori:</b> {autori}</div>
 
 <div>{data.get('corespondent','')}</div>
 
