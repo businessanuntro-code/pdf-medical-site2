@@ -81,13 +81,7 @@ def format_content(text):
     flags=re.I | re.S
     )
 
-    # LBody -> text normal
-    text = re.sub(
-    r"<LBody>(.*?)</LBody>",
-    r"\n\1\n",
-    text,
-    flags=re.I | re.S
-    )
+    
 
     lines = [x.strip() for x in text.splitlines() if x.strip()]
 
