@@ -99,7 +99,7 @@ def parse_xml(path):
 
     data["continut_articol"] = "\n".join(body)
 
-        # =====================================================
+    # =====================================================
     # BIBLIOGRAFIE
     # =====================================================
 
@@ -120,20 +120,14 @@ def parse_xml(path):
         if "<Sect>" in xml:
             break
 
-        if "<LI>" in xml:
+        if "<LBody>" in xml:
 
             node = etree.fromstring(xml)
 
-            for li in node.findall(".//LI"):
-
-                lbl = li.find(".//Lbl")
-                body = li.find(".//LBody")
-
-                nr = _text(lbl)
-                text = _text(body)
-
-                if text:
-                    refs.append(f"{nr}{text}")
+            for ref in node.findall(".//LBody"):
+                txt = _text(ref)
+                if txt:
+                    refs.append(txt)
 
     data["bibliografie"] = "\n".join(refs)
 
