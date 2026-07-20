@@ -27,9 +27,14 @@ def superscript_author_refs(text):
     trans = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 
     def repl(match):
-        return "<sup>" + match.group(1).translate(trans) + "</sup>"
+        nums = match.group(1).translate(trans)
+        return f"<sup>{nums}</sup>"
 
-    return re.sub(r'(?<=[A-Za-zĂÂÎȘȚăâîșț\-])(\d+(?:,\d+)*)', repl, text)
+    return re.sub(
+        r'(?<=[A-Za-zĂÂÎȘȚăâîșț\-])(\d+(?:,\d+)*)',
+        repl,
+        text
+    )
 
 
 
