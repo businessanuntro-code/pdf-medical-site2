@@ -31,7 +31,7 @@ def superscript_author_refs(text):
     )
 
 
-
+# Adauga superscript simboluri
 def superscript_symbols(text):
     return text.replace("™","<sup>™</sup>").replace("®","<sup>®</sup>") if text else ""
 
@@ -77,6 +77,14 @@ def format_content(text):
     text = re.sub(
     r"<Sub_Intertitlu>(.*?)</Sub_Intertitlu>",
     r"\n<strong><i>\1</i></strong>\n",
+    text,
+    flags=re.I | re.S
+    )
+
+    # LBody -> text normal
+    text = re.sub(
+    r"<LBody>(.*?)</LBody>",
+    r"\n\1\n",
     text,
     flags=re.I | re.S
     )
