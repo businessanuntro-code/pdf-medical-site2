@@ -19,6 +19,20 @@ def superscript_refs(text):
         text
     )
 
+def superscript_author_refs(text):
+    if not text:
+        return ""
+
+    trans = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+
+    def convert(match):
+        return "<sup>" + match.group(1).translate(trans) + "</sup>"
+
+    return re.sub(
+        r'(\d+(?:,\d+)*)$',
+        convert,
+        text.strip()
+    )
 
 def superscript_symbols(text):
     return text.replace("™","<sup>™</sup>").replace("®","<sup>®</sup>") if text else ""
@@ -146,7 +160,7 @@ def build_html(data):
 <h1>{data.get('titlu','')}</h1>
 <h2>{data.get('english_title','')}</h2>
 
-<div><b>Autori:</b> {data.get('autor','')}</div>
+<div><b>Autori:</b> {superscript_author_refs(data.get('autor',''))}</div>
 
 <div>{data.get('corespondent','')}</div>
 
