@@ -135,6 +135,10 @@ def parse_xml(path):
                 if text:
                     refs.append(f"{nr}{text}")
 
+    print("BIBLIOGRAFIE EXTRASA:")
+    for r in refs:
+        print(r)
+
     data["bibliografie"] = "\n".join(refs)
 
     return data
