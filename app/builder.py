@@ -88,6 +88,14 @@ def format_content(text):
         flags=re.I | re.S
     )
 
+    # INTER_Style_3 -> bold + italic
+    text = re.sub(
+    r"<INTER_Style_3>(.*?)</INTER_Style_3>",
+    r"\n<strong><i>\1</i></strong>\n",
+    text,
+    flags=re.I | re.S
+    )
+
     lines = [x.strip() for x in text.splitlines() if x.strip()]
 
     html = []
