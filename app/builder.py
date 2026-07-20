@@ -26,15 +26,12 @@ def superscript_author_refs(text):
 
     trans = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 
-    def convert(match):
-        nums = match.group(1).translate(trans)
-        return f"<sup>{nums}</sup>"
+    def repl(match):
+        return "<sup>" + match.group(1).translate(trans) + "</sup>"
 
-    return re.sub(
-        r'([0-9]+(?:,[0-9]+)*)(?=,?\s+[A-ZĂÂÎȘȚ]|$)',
-        convert,
-        text
-    )
+    return re.sub(r'(?<=[A-Za-zĂÂÎȘȚăâîșț\-])(\d+(?:,\d+)*)', repl, text)
+
+
 
 def superscript_symbols(text):
     return text.replace("™","<sup>™</sup>").replace("®","<sup>®</sup>") if text else ""
