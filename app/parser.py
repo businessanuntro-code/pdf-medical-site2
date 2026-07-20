@@ -99,29 +99,42 @@ def parse_xml(path):
 
     data["continut_articol"] = "\n".join(body)
 
-    # =====================================================
+        # =====================================================
     # BIBLIOGRAFIE
     # =====================================================
 
-refs = []
+    collecting = False
+    refs = []
 
-# Cautam direct toate LBody din bibliografie
-bibliografie_start = False
+    for story in stories:
 
-for elem in root.iter():
+        xml = etree.tostring(story, encoding="unicode")
 
-    if elem.tag == "_No_paragraph_style_" and _text(elem) == "Bibliografie":
-        bibliografie_start = True
-        continue
+        if "<_No_paragraph_style_>Bibliografie</_No_paragraph_style_>" in xml:
+            collecting = True
+            continue
 
-    if not bibliografie_start:
-        continue
+        if not collecting:
+            continue
 
-    if elem.tag == "LBody":
-        txt = _text(elem)
-        if txt:
-            refs.append(txt)
+        if "<Sect>" in xml:
+            break
 
-data["bibliografie"] = "\n".join(refs)
+        if "<LI>" in xml:
 
-return data
+            node = etree.fromstring(xml)
+
+            for li in node.findall(".//LI"):
+
+                lbl = li.find(".//Lbl")
+                body = li.find(".//LBody")
+
+                nr = _text(lbl)
+                text = _text(body)
+
+                if text:
+                    refs.append(f"{nr}{text}")
+
+    data["bibliografie"] = "\n".join(refs)
+
+    return data
