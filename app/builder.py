@@ -159,7 +159,7 @@ def build_html(data):
 <h1>{data.get('titlu','')}</h1>
 <h2>{data.get('english_title','')}</h2>
 
-<div><b>Autori:</b> {autori}</div>
+<div><b>Autori:</b> {autor}</div>
 
 <div>{data.get('corespondent','')}</div>
 
