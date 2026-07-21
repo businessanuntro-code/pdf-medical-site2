@@ -139,4 +139,30 @@ def parse_xml(path):
 
     data["bibliografie"] = "\n".join(refs)
 
+# =====================================================
+# CONFLICT DE INTERESE / SUPORT FINANCIAR / CC-BY
+# =====================================================
+
+for story in stories:
+
+    xml = etree.tostring(story, encoding="unicode")
+
+    if "<NormalParagraphStyle>" not in xml:
+        continue
+
+    node = etree.fromstring(xml)
+
+    for p in node.findall(".//NormalParagraphStyle"):
+
+        txt = _text(p)
+
+        if txt.startswith("CONFLICT DE INTERESE") or txt.startswith("Conflict of interest"):
+            data["conflict"] = txt
+
+        elif txt.startswith("SUPORT FINANCIAR") or txt.startswith("Financial support"):
+            data["financial_support"] = txt
+
+        elif "CC-BY" in txt:
+            data["cc_by"] = txt
+
     return data
