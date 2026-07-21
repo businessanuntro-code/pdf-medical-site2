@@ -21,6 +21,8 @@ def parse_xml(path):
         "keywords_rom": "",
         "continut_articol": "",
         "corespondent": "",
+        "primit": "",
+        "acceptat": "",
         "bibliografie": "",
     }
 
@@ -58,15 +60,19 @@ def parse_xml(path):
     # CORESPONDENT (primul - autor corespondent)
     # =====================================================
 
-    for c in root.findall(".//Corespondent"):
-        txt = _text(c)
+   for c in root.findall(".//Corespondent"):
 
-        if txt.startswith("Primit"):
-            continue
+    txt = _text(c)
 
-        if txt.startswith("Acceptat"):
-            continue
+    if txt.startswith("Primit"):
+        data["primit"] = txt
+        continue
 
+    if txt.startswith("Acceptat"):
+        data["acceptat"] = txt
+        continue
+
+    if not data["corespondent"]:
         data["corespondent"] = txt
         break
 
