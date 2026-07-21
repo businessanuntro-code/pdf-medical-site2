@@ -212,7 +212,6 @@ def build_html(data):
 
 <div><b>Autori:</b> {superscript_author_refs(data.get("autor", ""))}</div>
 
-<div>{data.get('corespondent','')}</div>
 <div>{data.get('primit','')}</div>
 <div>{data.get('acceptat','')}</div>
 
@@ -231,6 +230,8 @@ def build_html(data):
 <h2>Conținut articol</h2>
 
 {continut}
+
+<div>{data.get('corespondent','')}</div>
 
 <h2>Bibliografie</h2>
 
