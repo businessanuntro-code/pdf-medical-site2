@@ -57,24 +57,23 @@ def parse_xml(path):
         data["keywords_rom"] = _text(root.find(".//Keywords_ROM"))
 
     # =====================================================
-    # CORESPONDENT (primul - autor corespondent)
+    # CORESPONDENT (autor + primit + acceptat)
     # =====================================================
 
-   for c in root.findall(".//Corespondent"):
+    for c in root.findall(".//Corespondent"):
 
-    txt = _text(c)
+        txt = _text(c)
 
-    if txt.startswith("Primit"):
-        data["primit"] = txt
-        continue
+        if txt.startswith("Primit"):
+            data["primit"] = txt
+            continue
 
-    if txt.startswith("Acceptat"):
-        data["acceptat"] = txt
-        continue
+        if txt.startswith("Acceptat"):
+            data["acceptat"] = txt
+            continue
 
-    if not data["corespondent"]:
-        data["corespondent"] = txt
-        break
+        if not data["corespondent"]:
+            data["corespondent"] = txt
 
     # =====================================================
     # CONTINUT ARTICOL
