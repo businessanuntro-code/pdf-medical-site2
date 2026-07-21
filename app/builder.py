@@ -235,7 +235,11 @@ def build_html(data):
 
 {continut}
 
-<div>{data.get('corespondent','')}</div>
+<p><b>{data.get('corespondent','')}</b></p>
+<p><b>{data.get('conflict','')}</b></p>
+<p><b>{data.get('financial_support','')}</b></p>
+<p>{data.get('cc_by','')}</p>
+<img src="https://www.medichub.ro/upload/photos/sigla_cc_by_25101.png" style="max-width:220px;">
 
 <h2>Bibliografie</h2>
 
