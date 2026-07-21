@@ -214,6 +214,9 @@ def build_html(data):
 
 <div>{data.get('primit','')}</div>
 <div>{data.get('acceptat','')}</div>
+<div>Editorial Group: MEDICHUB MEDIA</div>
+<div>DOI - se modifica in editare!</div>
+<div>Descarcă pdf - se face link automat!</div>
 
 <hr>
 
