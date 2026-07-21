@@ -23,6 +23,9 @@ def parse_xml(path):
         "corespondent": "",
         "primit": "",
         "acceptat": "",
+        "conflict": "",
+        "financial_support": "",
+        "cc_by": "",
         "bibliografie": "",
     }
 
