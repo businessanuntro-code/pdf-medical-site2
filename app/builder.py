@@ -212,6 +212,7 @@ def build_html(data):
 
 <div><b>Autori:</b> {superscript_author_refs(data.get("autor", ""))}</div>
 
+<div>Data publicării: se modifica in editare!<div>
 <div>{data.get('primit','')}</div>
 <div>{data.get('acceptat','')}</div>
 <div>Editorial Group: MEDICHUB MEDIA</div>
