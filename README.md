@@ -1,8 +1,31 @@
-# InDesign XML Publisher
+# XML Publisher
 
 ## Flow
 
-InDesign XML → Upload → HTML Article → Link
+Upload XML
+      │
+      ▼
+parser.py
+(extrage toate câmpurile)
+      │
+      ▼
+build_html()   (generează HTML-ul articolului)
+      │
+      ▼
+INSERT în MySQL
+      │
+      ▼
+primește ID-ul articolului
+      │
+      ▼
+redirect:
+/articol/123
+      │
+      ▼
+SELECT * FROM articole WHERE id=123
+      │
+      ▼
+afișează articolul din baza de date
 
 ## Run locally
 
