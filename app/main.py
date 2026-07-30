@@ -9,6 +9,8 @@ from fastapi.staticfiles import StaticFiles  # 🔥 IMPORTANT FIX
 from app.parser import parse_xml
 from app.builder import build_html
 
+from app.database import get_db
+
 app = FastAPI()
 
 templates = Jinja2Templates(directory="templates")
