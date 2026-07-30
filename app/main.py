@@ -10,6 +10,14 @@ from app.parser import parse_xml
 from app.builder import build_html
 
 from app.database import get_db
+app = FastAPI()
+try:
+    db = get_db()
+    print("✅ Conexiune MySQL OK")
+    db.close()
+except Exception as e:
+    print("❌ Eroare conexiune MySQL:")
+    print(e)
 
 app = FastAPI()
 
