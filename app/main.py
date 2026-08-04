@@ -57,20 +57,22 @@ async def upload(file: UploadFile):
     # 2. Parse XML
     data = parse_xml(xml_path)
 
-    # 3. Publicare articol în baza de date
-    publish_article(data)
-
-    # 4. Generare HTML
+    # 3. Generare HTML
     html = build_html(data)
+
+    # 4. Adăugare HTML în dicționarul trimis către API
     data["continut_html"] = html
 
-    # 5. Salvare HTML
+    # 5. Publicare articol în baza de date
+    publish_article(data)
+
+    # 6. Salvare HTML local
     html_path = f"{OUTPUT_DIR}/{file_id}.html"
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html)
 
-    # 6. Redirect către articol
+    # 7. Redirect către articol
     return RedirectResponse(
         url=f"/article/{file_id}",
         status_code=302
