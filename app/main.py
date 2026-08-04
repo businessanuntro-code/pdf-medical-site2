@@ -56,9 +56,6 @@ async def upload(file: UploadFile):
 
     # 2. Parse XML
     data = parse_xml(xml_path)
-    import pprint
-
-pprint.pprint(data)
 
     # 3. Publicare articol în baza de date
     publish_article(data)
