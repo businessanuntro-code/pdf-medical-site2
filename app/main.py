@@ -94,10 +94,13 @@ def test_api():
     try:
 
         response = requests.post(
-            "https://diaconu-daniel.ro/api/import.php",
-            json=articol,
-            timeout=30
-        )
+    "https://diaconu-daniel.ro/api/import.php",
+    json=articol,
+    headers={
+        "X-API-Key": "MEDICHUB_SECRET_2026"
+    },
+    timeout=30
+)
 
         return {
             "status_code": response.status_code,
