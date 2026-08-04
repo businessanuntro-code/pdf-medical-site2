@@ -1,5 +1,6 @@
 import os
 import uuid
+import requests
 
 from fastapi import FastAPI, UploadFile, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -78,3 +79,34 @@ def article(file_id: str):
 
     with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
+
+
+# ---------------- API TEST ----------------
+@app.get("/test-api")
+def test_api():
+
+    articol = {
+        "titlu": "Articol test",
+        "autor": "Daniel Diaconu",
+        "continut": "Acesta este un test trimis din Render."
+    }
+
+    try:
+
+        response = requests.post(
+            "https://diaconu-daniel.ro/api/import.php",
+            json=articol,
+            timeout=30
+        )
+
+        return {
+            "status_code": response.status_code,
+            "response": response.json()
+        }
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "error": str(e)
+        }
