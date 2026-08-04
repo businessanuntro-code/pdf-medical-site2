@@ -62,6 +62,7 @@ async def upload(file: UploadFile):
 
     # 4. Generare HTML
     html = build_html(data)
+    data["continut_html"] = html
 
     # 5. Salvare HTML
     html_path = f"{OUTPUT_DIR}/{file_id}.html"
