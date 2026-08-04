@@ -51,6 +51,7 @@ async def upload(file: UploadFile):
 
     # 2. parse XML
     data = parse_xml(xml_path)
+    publish_article(data)
 
     # 3. generează HTML
     html = build_html(data)
