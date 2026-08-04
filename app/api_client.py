@@ -3,7 +3,7 @@ import requests
 
 def publish_article(data):
 
-    url = "URL_API_IMPORT"
+    url = "https://diaconu-daniel.ro/api/import.php"
 
     response = requests.post(
         url,
