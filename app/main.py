@@ -10,6 +10,9 @@ from app.parser import parse_xml
 from app.builder import build_html
 from app.api_client import publish_article
 
+from fastapi import Body
+from fastapi.responses import JSONResponse
+
 app = FastAPI()
 
 templates = Jinja2Templates(directory="templates")
@@ -95,3 +98,16 @@ def article(file_id: str):
 
     with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
+
+@app.post("/regenerate")
+async def regenerate(data: dict = Body(...)):
+
+    html = build_html(data)
+
+    return JSONResponse({
+
+        "success": True,
+
+        "continut_html": html
+
+    })
