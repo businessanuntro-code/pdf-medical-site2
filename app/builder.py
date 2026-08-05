@@ -2,9 +2,53 @@
 import re
 
 def linkify(text):
-    if not text: return ""
-    return re.sub(r'(https?://[^\s]+|www\.[^\s]+)',
-                  lambda m:f'<a href="{"https://"+m.group(0) if m.group(0).startswith("www.") else m.group(0)}" target="_blank">{m.group(0)}</a>',text)
+
+    if not text:
+        return ""
+
+
+    # protejeaza tagurile HTML existente
+    protected = []
+
+
+    def protect(match):
+
+        protected.append(match.group(0))
+
+        return f"___HTML_{len(protected)-1}___"
+
+
+
+    text = re.sub(
+        r"<[^>]+>",
+        protect,
+        text
+    )
+
+
+
+    # transforma doar URL-urile din text normal
+
+    text = re.sub(
+        r'(https?://[^\s]+|www\.[^\s]+)',
+        lambda m:
+            f'<a href="{"https://"+m.group(0) if m.group(0).startswith("www.") else m.group(0)}" target="_blank">{m.group(0)}</a>',
+        text
+    )
+
+
+
+    # pune tagurile HTML inapoi
+
+    for i, tag in enumerate(protected):
+
+        text = text.replace(
+            f"___HTML_{i}___",
+            tag
+        )
+
+
+    return text
 
 def superscript_refs(text):
     if not text:
