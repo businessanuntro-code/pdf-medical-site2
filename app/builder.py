@@ -386,7 +386,10 @@ DOI: {data.get('doi','')}
 
 
 <div>
-Descarcă pdf: {data.get('descarca_pdf','')}
+Descarcă PDF:
+<a href="{data.get('descarca_pdf','')}" target="_blank">
+Click aici!
+</a>
 </div>
 
 
