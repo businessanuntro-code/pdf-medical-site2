@@ -348,13 +348,12 @@ Data publicării: {data.get('data_publicarii','')}
 
 
 <div>
-Primit: {data.get('primit','')}
+Primit: {primit}
 </div>
 
 
-
 <div>
-Acceptat: {data.get('acceptat','')}
+Acceptat: {acceptat}
 </div>
 
 
