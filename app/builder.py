@@ -308,7 +308,23 @@ def build_html(data):
         data.get("cc_by", "")
     )
 
+    # =====================================
+    # Normalizare Primit / Acceptat
+    # Pentru afisare ca la Autori:
+    # DB = doar data
+    # HTML = Primit: data
+    # =====================================
 
+    primit = data.get("primit", "")
+
+    if primit.lower().startswith("primit:"):
+        primit = primit.split(":", 1)[1].strip()
+
+
+    acceptat = data.get("acceptat", "")
+
+    if acceptat.lower().startswith("acceptat:"):
+        acceptat = acceptat.split(":", 1)[1].strip()
 
     return f"""<!DOCTYPE html>
 <html lang="ro">
@@ -348,12 +364,12 @@ Data publicării: {data.get('data_publicarii','')}
 
 
 <div>
-Primit: {data.get('primit','')}
+Primit: {primit}
 </div>
 
 
 <div>
-Acceptat: {data.get('acceptat','')}
+Acceptat: {acceptat}
 </div>
 
 
