@@ -214,7 +214,36 @@ def format_bibliography(text):
     return html+"</ol>"
 
 def build_html(data):
-    continut = format_content(data.get("continut_articol", ""))
+
+    # =====================================
+    # Compatibilitate:
+    # XML import vechi + editare DB noua
+    # =====================================
+
+    titlu_ro = data.get(
+        "titlu_ro",
+        data.get("titlu", "")
+    )
+
+    titlu_en = data.get(
+        "titlu_en",
+        data.get("english_title", "")
+    )
+
+    autori = data.get(
+        "autori",
+        data.get("autor", "")
+    )
+
+    continut_text = data.get(
+        "continut",
+        data.get("continut_articol", "")
+    )
+
+
+    continut = format_content(continut_text)
+
+
 
     abstract = superscript_symbols(
         superscript_refs(
@@ -222,11 +251,21 @@ def build_html(data):
         )
     )
 
+
+
+    keywords = data.get(
+        "keywords",
+        data.get("keywords_eng", "")
+    )
+
+
     kwe = superscript_symbols(
         superscript_refs(
-            linkify(data.get("keywords_eng", ""))
+            linkify(keywords)
         )
     )
+
+
 
     rez = superscript_symbols(
         superscript_refs(
@@ -234,60 +273,197 @@ def build_html(data):
         )
     )
 
+
+
+    cuvinte_cheie = data.get(
+        "cuvinte_cheie",
+        data.get("keywords_rom", "")
+    )
+
+
     kwr = superscript_symbols(
         superscript_refs(
-            linkify(data.get("keywords_rom", ""))
+            linkify(cuvinte_cheie)
         )
     )
+
+
+
+    autor_corespondent = data.get(
+        "autor_corespondent",
+        data.get("corespondent", "")
+    )
+
+
+
+    suport = data.get(
+        "suport",
+        data.get("financial_support", "")
+    )
+
+
+
+    licenta = data.get(
+        "licenta_cc_by",
+        data.get("cc_by", "")
+    )
+
+
 
     return f"""<!DOCTYPE html>
 <html lang="ro">
 
 <head>
+
 <meta charset="utf-8">
-<title>{data.get('titlu','Articol')}</title>
+
+<title>{titlu_ro}</title>
+
 <link rel="stylesheet" href="/static/style.css">
+
 </head>
+
 
 <body>
 
-<h1>{data.get('titlu','')}</h1>
-<h2>{data.get('english_title','')}</h2>
 
-<div><b>Autori:</b> {superscript_author_refs(data.get("autor", ""))}</div>
+<h1>{titlu_ro}</h1>
 
-<div>Data publicării: se modifica in editare!<div>
-<div>{data.get('primit','')}</div>
-<div>{data.get('acceptat','')}</div>
-<div>Editorial Group: MEDICHUB MEDIA</div>
-<div>DOI - se modifica in editare!</div>
-<div>Descarcă pdf - se face link automat!</div>
+
+<h2>{titlu_en}</h2>
+
+
+
+<div>
+<b>Autori:</b>
+{superscript_author_refs(autori)}
+</div>
+
+
+
+<div>
+Data publicării: {data.get('data_publicarii','')}
+</div>
+
+
+
+<div>
+Primit: {data.get('primit','')}
+</div>
+
+
+
+<div>
+Acceptat: {data.get('acceptat','')}
+</div>
+
+
+
+<div>
+Editorial Group: {data.get('editorial_grup','')}
+</div>
+
+
+
+<div>
+DOI: {data.get('doi','')}
+</div>
+
+
+
+<div>
+Descarcă pdf: {data.get('descarca_pdf','')}
+</div>
+
+
 
 <hr>
 
-<h2>Abstract</h2>
-<p><i>{abstract}</i></p>
 
-<p>{kwe}</p>
+
+<h2>Abstract</h2>
+
+<p>
+<i>{abstract}</i>
+</p>
+
+
+
+<p>
+{kwe}
+</p>
+
+
+
 
 <h2>Rezumat</h2>
-<p><i>{rez}</i></p>
 
-<p>{kwr}</p>
+
+<p>
+<i>{rez}</i>
+</p>
+
+
+
+<p>
+{kwr}
+</p>
+
+
+
 
 <h2>Conținut articol</h2>
 
+
 {continut}
 
-<p><b>{data.get('corespondent','')}</b></p>
-<p><b>{data.get('conflict','')}</b></p>
-<p><b>{data.get('financial_support','')}</b></p>
-<p>{data.get('cc_by','')}</p>
-<img src="https://www.medichub.ro/upload/photos/sigla_cc_by_25101.png" style="max-width:220px;">
+
+
+
+<p>
+<b>
+{autor_corespondent}
+</b>
+</p>
+
+
+
+<p>
+<b>
+{data.get('conflict','')}
+</b>
+</p>
+
+
+
+<p>
+<b>
+{suport}
+</b>
+</p>
+
+
+
+<p>
+{licenta}
+</p>
+
+
+
+<img 
+src="https://www.medichub.ro/upload/photos/sigla_cc_by_25101.png"
+style="max-width:220px;">
+
+
+
 
 <h2>Bibliografie</h2>
 
+
 {format_bibliography(data.get('bibliografie',''))}
 
+
+
 </body>
+
 </html>"""
