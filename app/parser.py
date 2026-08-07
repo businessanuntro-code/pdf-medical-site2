@@ -51,7 +51,7 @@ def parse_xml(path):
         data["abstract"] = _text(root.find(".//Abstract"))
 
     if root.find(".//Keywords_ENG") is not None:
-    data["keywords_eng"] = (
+        data["keywords_eng"] = (
         _text(root.find(".//Keywords_ENG"))
         .replace("Keywords:", "")
         .strip()
@@ -61,7 +61,7 @@ def parse_xml(path):
         data["rezumat"] = _text(root.find(".//Rezumat"))
 
     if root.find(".//Keywords_ROM") is not None:
-    data["keywords_rom"] = (
+        data["keywords_rom"] = (
         _text(root.find(".//Keywords_ROM"))
         .replace("Cuvinte cheie:", "")
         .strip()
