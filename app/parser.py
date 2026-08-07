@@ -61,7 +61,11 @@ def parse_xml(path):
         data["rezumat"] = _text(root.find(".//Rezumat"))
 
     if root.find(".//Keywords_ROM") is not None:
-        data["keywords_rom"] = _text(root.find(".//Keywords_ROM"))
+    data["keywords_rom"] = (
+        _text(root.find(".//Keywords_ROM"))
+        .replace("Cuvinte cheie:", "")
+        .strip()
+    )
 
     # =====================================================
     # CORESPONDENT (autor + primit + acceptat)
