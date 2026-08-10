@@ -4,10 +4,14 @@ from lxml import etree
 def _text(el):
     if el is None:
         return ""
-    return " ".join(el.itertext()).strip()
+
+    return " ".join(
+        el.itertext()
+    ).strip()
 
 
 def parse_xml(path):
+
     tree = etree.parse(path)
     root = tree.getroot()
 
@@ -34,15 +38,21 @@ def parse_xml(path):
     # =====================================================
 
     if root.find(".//TITLU") is not None:
-        data["titlu"] = _text(root.find(".//TITLU"))
+        data["titlu"] = _text(
+            root.find(".//TITLU")
+        )
 
     if root.find(".//English_Title") is not None:
-        data["english_title"] = _text(root.find(".//English_Title"))
+        data["english_title"] = _text(
+            root.find(".//English_Title")
+        )
 
     if root.find(".//Autor") is not None:
+
         autori = []
 
         for a in root.findall(".//Autor"):
+
             t = _text(a)
 
             if t:
@@ -51,7 +61,9 @@ def parse_xml(path):
         data["autor"] = ", ".join(autori)
 
     if root.find(".//Abstract") is not None:
-        data["abstract"] = _text(root.find(".//Abstract"))
+        data["abstract"] = _text(
+            root.find(".//Abstract")
+        )
 
     if root.find(".//Keywords_ENG") is not None:
         data["keywords_eng"] = _text(
@@ -69,7 +81,7 @@ def parse_xml(path):
         )
 
     # =====================================================
-    # CORESPONDENT (autor + primit + acceptat)
+    # CORESPONDENT / PRIMIT / ACCEPTAT
     # =====================================================
 
     for c in root.findall(".//Corespondent"):
@@ -89,8 +101,6 @@ def parse_xml(path):
 
     # =====================================================
     # CONTINUT ARTICOL
-    # Tot ce urmeaza dupa Keywords_ROM
-    # pana la primul Corespondent (Primit)
     # =====================================================
 
     stories = root.findall(".//Story")
@@ -176,22 +186,32 @@ def parse_xml(path):
 
         node = etree.fromstring(xml)
 
-        for p in node.findall(".//NormalParagraphStyle"):
+        for p in node.findall(
+            ".//NormalParagraphStyle"
+        ):
 
             txt = _text(p)
 
             if (
-                txt.startswith("CONFLICT DE INTERESE")
+                txt.startswith(
+                    "CONFLICT DE INTERESE"
+                )
                 or
-                txt.startswith("Conflict of interest")
+                txt.startswith(
+                    "Conflict of interest"
+                )
             ):
 
                 data["conflict"] = txt
 
             elif (
-                txt.startswith("SUPORT FINANCIAR")
+                txt.startswith(
+                    "SUPORT FINANCIAR"
+                )
                 or
-                txt.startswith("Financial support")
+                txt.startswith(
+                    "Financial support"
+                )
             ):
 
                 data["financial_support"] = txt
@@ -209,16 +229,13 @@ def parse_xml(path):
 #
 # REGULA:
 #
-#   PARAGRAFUL 2 + PRIMUL H TAG
-#               ↓
-#          TITLU PRINCIPAL
+# PARAGRAFUL 2 + PRIMUL H TAG
+#             ↓
+#        TITLU PRINCIPAL
 #
-#   RESTUL CONTINUTULUI
-#               ↓
-#          CONTINUT ARTICOL
-#
-# Aceasta functie este separata de parse_xml()
-# pentru a nu modifica fluxul existent.
+# RESTUL CONTINUTULUI
+#             ↓
+#        CONTINUT ARTICOL
 # =========================================================
 
 def parse_simple_xml(path):
@@ -232,7 +249,7 @@ def parse_simple_xml(path):
     }
 
     # =====================================================
-    # GASIM ELEMENTELE DIN XML
+    # ELEMENTELE XML
     # =====================================================
 
     elements = list(root.iter())
@@ -240,23 +257,22 @@ def parse_simple_xml(path):
     # =====================================================
     # PARAGRAFUL 2
     # =====================================================
-    #
-    # Luam al doilea element de tip paragraf din document.
-    #
-    # Pentru XML-ul actual, acesta este folosit ca prima
-    # parte a titlului principal.
-    # =====================================================
 
     paragraph_elements = []
 
     for element in elements:
 
-    if not isinstance(element.tag, str):
-        continue
+        # IMPORTANT:
+        # Unele noduri lxml pot avea .tag ca obiect
+        # special, nu ca string XML.
+        if not isinstance(element.tag, str):
+            continue
 
-    tag = etree.QName(element).localname
+        tag = etree.QName(
+            element
+        ).localname
 
-    tag_lower = tag.lower()
+        tag_lower = tag.lower()
 
         if tag_lower in (
             "p",
@@ -268,17 +284,18 @@ def parse_simple_xml(path):
             txt = _text(element)
 
             if txt:
-                paragraph_elements.append(element)
+                paragraph_elements.append(
+                    element
+                )
 
     paragraph_2 = None
 
     if len(paragraph_elements) >= 2:
-
         paragraph_2 = paragraph_elements[1]
 
-
-    paragraph_2_text = _text(paragraph_2)
-
+    paragraph_2_text = _text(
+        paragraph_2
+    )
 
     # =====================================================
     # PRIMUL H TAG
@@ -290,20 +307,22 @@ def parse_simple_xml(path):
     for index, element in enumerate(elements):
 
         if not isinstance(element.tag, str):
-        continue
+            continue
 
-        tag = etree.QName(element).localname
+        tag = etree.QName(
+            element
+        ).localname
 
         tag_upper = tag.upper()
 
-        if (
-            tag_upper == "H1"
-            or tag_upper == "H2"
-            or tag_upper == "H3"
-            or tag_upper == "H4"
-            or tag_upper == "H5"
-            or tag_upper == "H6"
-            or tag_upper == "H"
+        if tag_upper in (
+            "H1",
+            "H2",
+            "H3",
+            "H4",
+            "H5",
+            "H6",
+            "H",
         ):
 
             txt = _text(element)
@@ -315,24 +334,22 @@ def parse_simple_xml(path):
 
                 break
 
-
-    first_h_text = _text(first_h)
-
+    first_h_text = _text(
+        first_h
+    )
 
     # =====================================================
-    # CONSTRUIRE TITLU
+    # CONSTRUIRE TITLUL
     # =====================================================
 
     title_parts = []
 
     if paragraph_2_text:
-
         title_parts.append(
             paragraph_2_text
         )
 
     if first_h_text:
-
         title_parts.append(
             first_h_text
         )
@@ -343,34 +360,39 @@ def parse_simple_xml(path):
         if part.strip()
     )
 
-
     # =====================================================
-    # CONTINUT
-    # =====================================================
-    #
-    # Pentru prima versiune păstrăm structura XML
-    # după primul H tag.
-    #
-    # Nu încercăm încă să interpretăm separat:
-    # autori / abstract / keywords etc.
+    # CONTINUT ARTICOL
     # =====================================================
 
     body = []
 
     if first_h_index is not None:
 
-        for element in elements[first_h_index + 1:]:
+        for index, element in enumerate(elements):
 
-            # Evitam elementele descendente care apar
-            # deja în interiorul unui element superior.
+            if not isinstance(element.tag, str):
+                continue
+
+            if index <= first_h_index:
+                continue
+
+            # =================================================
+            # Evităm elementele descendente care sunt deja
+            # incluse în elementele părinte.
+            # =================================================
+
             parent = element.getparent()
 
             if parent is not None:
 
-                parent_index = elements.index(parent)
+                if parent in elements:
 
-                if parent_index > first_h_index:
-                    continue
+                    parent_index = elements.index(
+                        parent
+                    )
+
+                    if parent_index > first_h_index:
+                        continue
 
             xml = etree.tostring(
                 element,
@@ -378,11 +400,10 @@ def parse_simple_xml(path):
             )
 
             if xml.strip():
-
                 body.append(xml)
 
-
-    data["continut_articol"] = "\n".join(body)
-
+    data["continut_articol"] = "\n".join(
+        body
+    )
 
     return data
