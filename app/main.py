@@ -7,7 +7,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
 from app.parser import parse_xml, parse_simple_xml
-from app.builder import build_html
+from app.builder import build_html, build_simple_html
 from app.api_client import publish_article
 
 from fastapi import Body
