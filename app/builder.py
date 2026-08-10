@@ -710,6 +710,8 @@ def format_simple_content(text):
     # =====================================================
     # AFILIERI
     #
+    # Listele din zona de dupa autori:
+    #
     # • afilierea 1
     # • afilierea 2
     # • afilierea 3
@@ -720,7 +722,7 @@ def format_simple_content(text):
     # 2. afilierea 2
     # 3. afilierea 3
     #
-    # toate italic
+    # si sunt scrise italic.
     # =====================================================
 
     text = process_simple_affiliations(
@@ -728,14 +730,27 @@ def format_simple_content(text):
     )
 
     # =====================================================
-    # Restul conținutului
-    #
-    # Nu modificăm regulile articolelor științifice.
+    # Procesăm restul conținutului folosind funcția
+    # existentă.
     # =====================================================
 
     html = format_content(
-    text
-)
+        text
+    )
+
+    # =====================================================
+    # Transformăm marcajele speciale ale afilierilor
+    # în paragrafe HTML numerotate.
+    # =====================================================
+
+    html = re.sub(
+        r"__SIMPLE_AFFILIATION__(\d+)\.\s*(<i>.*?</i>)",
+        r"<p>\1. \2</p>",
+        html,
+        flags=re.I | re.S
+    )
+
+    return html
 
 html = re.sub(
     r"__SIMPLE_AFFILIATION__(\d+)\.\s*(<i>.*?</i>)",
