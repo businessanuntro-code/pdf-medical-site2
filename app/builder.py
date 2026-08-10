@@ -96,19 +96,36 @@ def format_content(text):
     )
 
     # elimină tabelele
-    text = re.sub(r"<table.*?</table>", "", text, flags=re.I | re.S)
+    text = re.sub(
+        r"<table.*?</table>",
+        "",
+        text,
+        flags=re.I | re.S
+    )
 
     # elimină figurile
-    text = re.sub(r"<figure.*?</figure>", "", text, flags=re.I | re.S)
+    text = re.sub(
+        r"<figure.*?</figure>",
+        "",
+        text,
+        flags=re.I | re.S
+    )
 
     # elimină orice tag imagine XML
-    text = re.sub(r"<imagine\d+[^>]*\/?>", "", text, flags=re.I)
+    text = re.sub(
+        r"<imagine\d+[^>]*\/?>",
+        "",
+        text,
+        flags=re.I
+    )
 
     text = text.replace("\u2029", "\n")
 
-    # ==========================
-    # LISTE (<LBody>) - FARA BOLD
-    # ==========================
+    # =====================================================
+    # LISTE (<LI><Lbl>...</Lbl><LBody>...</LBody></LI>)
+    # FARA BOLD AUTOMAT
+    # =====================================================
+
     text = re.sub(
         r"<LI>\s*<Lbl>.*?</Lbl>\s*<LBody>(.*?)</LBody>\s*</LI>",
         r"\n__LBODY__&#8226; \1\n",
@@ -116,7 +133,10 @@ def format_content(text):
         flags=re.I | re.S
     )
 
-    # Intertitlu -> bold
+    # =====================================================
+    # INTERTITLU -> BOLD
+    # =====================================================
+
     text = re.sub(
         r"<Intertitlu>(.*?)</Intertitlu>",
         r"\n<strong>\1</strong>\n",
@@ -124,7 +144,10 @@ def format_content(text):
         flags=re.I | re.S
     )
 
-    # Sub_Intertitlu -> bold + italic
+    # =====================================================
+    # SUB_INTERTITLU -> BOLD + ITALIC
+    # =====================================================
+
     text = re.sub(
         r"<Sub_Intertitlu>(.*?)</Sub_Intertitlu>",
         r"\n<strong><i>\1</i></strong>\n",
@@ -132,77 +155,110 @@ def format_content(text):
         flags=re.I | re.S
     )
 
-    # INTER_Style_3 -> bold + italic
+    # =====================================================
+    # INTER_STYLE_3 -> BOLD + ITALIC
+    # =====================================================
+
     text = re.sub(
-    r"<INTER_Style_3>(.*?)</INTER_Style_3>",
-    r"\n<strong><i>\1</i></strong>\n",
-    text,
-    flags=re.I | re.S
+        r"<INTER_Style_3>(.*?)</INTER_Style_3>",
+        r"\n<strong><i>\1</i></strong>\n",
+        text,
+        flags=re.I | re.S
     )
 
-    lines = [x.strip() for x in text.splitlines() if x.strip()]
+    # =====================================================
+    # SEPARARE IN RANDURI
+    # =====================================================
+
+    lines = [
+        x.strip()
+        for x in text.splitlines()
+        if x.strip()
+    ]
 
     html = []
+
+    # =====================================================
+    # PROCESARE RANDURI
+    # =====================================================
 
     for i, line in enumerate(lines):
 
         # verificăm dacă provine din LBody
         is_lbody = line.startswith("__LBODY__")
-        if is_lbody:
-            line = line.replace("__LBODY__", "", 1)
 
+        if is_lbody:
+            line = line.replace(
+                "__LBODY__",
+                "",
+                1
+            )
+
+        # linkuri
         processed = linkify(line)
+
+        # referinte intre paranteze -> superscript
         processed = superscript_refs(processed)
+
+        # simboluri
         processed = superscript_symbols(processed)
 
-        clean = re.sub(r"<[^>]+>", "", processed)
+        # text curat pentru numararea cuvintelor
+        clean = re.sub(
+            r"<[^>]+>",
+            "",
+            processed
+        )
+
         words = len(clean.split())
 
+        # verificam daca urmatorul paragraf este lung
         next_long = False
-        if i + 1 < len(lines):
-            next_clean = re.sub(r"<[^>]+>", "", lines[i + 1].replace("__LBODY__", ""))
-            next_long = len(next_clean.split()) > 8
 
-        # dacă vine din LBody NU îi aplicăm bold automat
+        if i + 1 < len(lines):
+
+            next_clean = re.sub(
+                r"<[^>]+>",
+                "",
+                lines[i + 1].replace(
+                    "__LBODY__",
+                    ""
+                )
+            )
+
+            next_long = (
+                len(next_clean.split()) > 8
+            )
+
+        # =================================================
+        # LISTA
+        # =================================================
+
         if is_lbody:
-            html.append(f"<p>{processed}</p>")
+
+            html.append(
+                f"<p>{processed}</p>"
+            )
+
+        # =================================================
+        # TITLU / INTERTITLU AUTOMAT
+        # =================================================
 
         elif 1 <= words <= 8 and next_long:
-            html.append(f"<p><strong>{processed}</strong></p>")
+
+            html.append(
+                f"<p><strong>{processed}</strong></p>"
+            )
+
+        # =================================================
+        # PARAGRAF NORMAL
+        # =================================================
 
         else:
-            html.append(f"<p>{processed}</p>")
 
-    return "\n".join(html)
-
-    
-
-    lines = [x.strip() for x in text.splitlines() if x.strip()]
-
-    html = []
-
-    for i, line in enumerate(lines):
-
-        processed = linkify(line)
-        processed = superscript_refs(processed)
-        processed = superscript_symbols(processed)
-
-        clean = re.sub(r"<[^>]+>", "", processed)
-        words = len(clean.split())
-
-        next_long = False
-        if i + 1 < len(lines):
-            next_long = len(lines[i + 1].split()) > 8
-
-        # titluri de capitole/subcapitole
-        if 1 <= words <= 8 and next_long:
-            html.append(f"<p><strong>{processed}</strong></p>")
-        else:
-
-            html.append(f"<p>{processed}</p>")
-            
-    else:
-        html.append(f"<p>{processed}</p>")
+            html.append(
+                f"<p>{processed}</p>"
+            )
 
     return "\n".join(html)
 
