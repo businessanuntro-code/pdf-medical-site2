@@ -484,3 +484,75 @@ style="max-width:220px;">
 </body>
 
 </html>"""
+
+# =====================================================
+# ARTICOL SIMPLU
+# =====================================================
+
+def build_simple_html(data):
+
+    titlu = data.get("titlu", "").strip()
+
+    continut_text = data.get(
+        "continut_articol",
+        ""
+    )
+
+    continut = format_content(continut_text)
+
+    # Aplicam linkify si pentru titlu
+    titlu_html = superscript_symbols(
+        linkify(titlu)
+    )
+
+    return f"""<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>{titlu}</title>
+
+    <style>
+
+        body {{
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+            color: #222;
+        }}
+
+        h1 {{
+            font-size: 28px;
+            line-height: 1.3;
+            margin-bottom: 30px;
+        }}
+
+        p {{
+            margin-bottom: 15px;
+        }}
+
+        a {{
+            color: #0066cc;
+        }}
+
+    </style>
+
+</head>
+
+<body>
+
+    <h1>{titlu_html}</h1>
+
+    <div class="continut-articol">
+
+        {continut}
+
+    </div>
+
+</body>
+
+</html>"""
