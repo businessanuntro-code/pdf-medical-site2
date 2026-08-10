@@ -1213,7 +1213,9 @@ def build_simple_html(data):
     # HTML FINAL
     # =====================================================
 
-    return f"""<!DOCTYPE html>
+    return f"""
+    
+<!DOCTYPE html>
 <html lang="ro">
 
 <head>
