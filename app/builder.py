@@ -690,31 +690,61 @@ def process_simple_h5(match):
     )
 
 
-def process_simple_affiliations(text):
+def format_simple_content(text):
 
-    counter = 0
+    if not text:
+        return ""
 
-    def replace_lbody(match):
-        nonlocal counter
-
-        counter += 1
-
-        content = match.group(1).strip()
-
-        return (
-            f"\n__SIMPLE_AFFILIATION__"
-            f"{counter}. "
-            f"<i>{content}</i>\n"
-        )
+    # =====================================================
+    # H5 = AUTORI
+    # Bold + superscript pentru numerele autorilor
+    # =====================================================
 
     text = re.sub(
-        r"<LI>\s*<Lbl>.*?</Lbl>\s*<LBody>(.*?)</LBody>\s*</LI>",
-        replace_lbody,
+        r"<H5>(.*?)</H5>",
+        process_simple_h5,
         text,
         flags=re.I | re.S
     )
 
-    return text
+    # =====================================================
+    # AFILIERI
+    #
+    # • afilierea 1
+    # • afilierea 2
+    # • afilierea 3
+    #
+    # devin:
+    #
+    # 1. afilierea 1
+    # 2. afilierea 2
+    # 3. afilierea 3
+    #
+    # toate italic
+    # =====================================================
+
+    text = process_simple_affiliations(
+        text
+    )
+
+    # =====================================================
+    # Restul conținutului
+    #
+    # Nu modificăm regulile articolelor științifice.
+    # =====================================================
+
+    html = format_content(
+    text
+)
+
+html = re.sub(
+    r"__SIMPLE_AFFILIATION__(\d+)\.\s*(<i>.*?</i>)",
+    r"<p>\1. \2</p>",
+    html,
+    flags=re.I | re.S
+)
+
+return html
 
 
 # =========================================================
