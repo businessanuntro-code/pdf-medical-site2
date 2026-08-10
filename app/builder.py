@@ -545,6 +545,44 @@ style="max-width:220px;">
 # ARTICOL SIMPLU
 # =====================================================
 
+def superscript_simple_author_refs(text):
+
+    if not text:
+        return ""
+
+    # Protejam tagurile HTML/XML
+    protected = []
+
+    def protect(match):
+        protected.append(match.group(0))
+        return f"___AUTHOR_HTML_{len(protected) - 1}___"
+
+    text = re.sub(
+        r"<[^>]+>",
+        protect,
+        text
+    )
+
+    # Autor + numar:
+    # Popescu1 -> Popescu<sup>1</sup>
+    # Ionescu2 -> Ionescu<sup>2</sup>
+    # Popescu1,2 -> Popescu<sup>1,2</sup>
+    text = re.sub(
+        r"(?<=[A-Za-zĂÂÎȘȚăâîșț\-])(\d+(?:,\d+)*)",
+        r"<sup>\1</sup>",
+        text
+    )
+
+    # Punem tagurile inapoi
+    for i, tag in enumerate(protected):
+
+        text = text.replace(
+            f"___AUTHOR_HTML_{i}___",
+            tag
+        )
+
+    return text
+
 def build_simple_html(data):
 
     titlu = data.get("titlu", "").strip()
@@ -554,7 +592,13 @@ def build_simple_html(data):
         ""
     )
 
-    continut = format_content(continut_text)
+    continut_text = superscript_simple_author_refs(
+    continut_text
+)
+
+continut = format_content(
+    continut_text
+)
 
     # Aplicam linkify si pentru titlu
     titlu_html = superscript_symbols(
