@@ -1208,7 +1208,11 @@ def build_simple_html(data):
     # =====================================================
 
     continut = format_simple_content(
-        continut_text
+    continut_text
+    )
+
+    continut = add_keywords_break(
+    continut
     )
 
     # =====================================================
