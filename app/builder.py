@@ -1,15 +1,23 @@
 # Updated builder.py
+
 import re
+
+
+# =========================================================
+# =========================================================
+# ARTICOLE ȘTIINȚIFICE
+# FUNCȚII EXISTENTE - NU SE MODIFICĂ
+# =========================================================
+# =========================================================
+
 
 def linkify(text):
 
     if not text:
         return ""
 
-
     # protejeaza tagurile HTML existente
     protected = []
-
 
     def protect(match):
 
@@ -17,18 +25,13 @@ def linkify(text):
 
         return f"___HTML_{len(protected)-1}___"
 
-
-
     text = re.sub(
         r"<[^>]+>",
         protect,
         text
     )
 
-
-
     # transforma doar URL-urile din text normal
-
     text = re.sub(
         r'(https?://[^\s]+|www\.[^\s]+)',
         lambda m:
@@ -36,10 +39,7 @@ def linkify(text):
         text
     )
 
-
-
     # pune tagurile HTML inapoi
-
     for i, tag in enumerate(protected):
 
         text = text.replace(
@@ -47,14 +47,16 @@ def linkify(text):
             tag
         )
 
-
     return text
 
+
 def superscript_refs(text):
+
     if not text:
         return ""
 
     def convert(match):
+
         return f"<sup>{match.group(0)}</sup>"
 
     return re.sub(
@@ -63,8 +65,14 @@ def superscript_refs(text):
         text
     )
 
-# Adauga superscript zona de Autori
+
+# =========================================================
+# ARTICOLE ȘTIINȚIFICE
+# Superscript zona Autori
+# =========================================================
+
 def superscript_author_refs(text):
+
     if not text:
         return ""
 
@@ -75,12 +83,34 @@ def superscript_author_refs(text):
     )
 
 
-# Adauga superscript simboluri
+# =========================================================
+# ARTICOLE ȘTIINȚIFICE
+# Superscript simboluri
+# =========================================================
+
 def superscript_symbols(text):
-    return text.replace("™","<sup>™</sup>").replace("®","<sup>®</sup>") if text else ""
+
+    return (
+        text.replace("™", "<sup>™</sup>")
+            .replace("®", "<sup>®</sup>")
+        if text
+        else ""
+    )
+
 
 def render_image(url):
-    return f'<figure class="img-figure"><img src="{url}" class="article-image"/></figure>'
+
+    return (
+        f'<figure class="img-figure">'
+        f'<img src="{url}" class="article-image"/>'
+        f'</figure>'
+    )
+
+
+# =========================================================
+# ARTICOLE ȘTIINȚIFICE
+# FORMAT CONTENT
+# =========================================================
 
 def format_content(text):
 
@@ -119,7 +149,10 @@ def format_content(text):
         flags=re.I
     )
 
-    text = text.replace("\u2029", "\n")
+    text = text.replace(
+        "\u2029",
+        "\n"
+    )
 
     # =====================================================
     # LISTE (<LI><Lbl>...</Lbl><LBody>...</LBody></LI>)
@@ -170,28 +203,6 @@ def format_content(text):
     # SEPARARE IN RANDURI
     # =====================================================
 
-    # =====================================================
-# H5 = AUTORI - ARTICOLE SIMPLE
-# Superscript DOAR pentru numerele autorilor
-# =====================================================
-
-def process_simple_authors(match):
-
-    author_text = match.group(1)
-
-    author_text = superscript_simple_author_refs(
-        author_text
-    )
-
-    return f"\n{author_text}\n"
-    
-text = re.sub(
-    r"<H5>(.*?)</H5>",
-    process_simple_authors,
-    text,
-    flags=re.I | re.S
-)
-    
     lines = [
         x.strip()
         for x in text.splitlines()
@@ -207,9 +218,12 @@ text = re.sub(
     for i, line in enumerate(lines):
 
         # verificăm dacă provine din LBody
-        is_lbody = line.startswith("__LBODY__")
+        is_lbody = line.startswith(
+            "__LBODY__"
+        )
 
         if is_lbody:
+
             line = line.replace(
                 "__LBODY__",
                 "",
@@ -220,10 +234,14 @@ text = re.sub(
         processed = linkify(line)
 
         # referinte intre paranteze -> superscript
-        processed = superscript_refs(processed)
+        processed = superscript_refs(
+            processed
+        )
 
         # simboluri
-        processed = superscript_symbols(processed)
+        processed = superscript_symbols(
+            processed
+        )
 
         # text curat pentru numararea cuvintelor
         clean = re.sub(
@@ -232,7 +250,9 @@ text = re.sub(
             processed
         )
 
-        words = len(clean.split())
+        words = len(
+            clean.split()
+        )
 
         # verificam daca urmatorul paragraf este lung
         next_long = False
@@ -284,12 +304,36 @@ text = re.sub(
 
     return "\n".join(html)
 
+
+# =========================================================
+# ARTICOLE ȘTIINȚIFICE
+# BIBLIOGRAFIE
+# =========================================================
+
 def format_bibliography(text):
-    if not text:return ""
-    html="<ol>"
-    for r in [x.strip() for x in text.splitlines() if x.strip()]:
-        html+=f"<li>{linkify(r)}</li>"
-    return html+"</ol>"
+
+    if not text:
+        return ""
+
+    html = "<ol>"
+
+    for r in [
+        x.strip()
+        for x in text.splitlines()
+        if x.strip()
+    ]:
+
+        html += f"<li>{linkify(r)}</li>"
+
+    return html + "</ol>"
+
+
+# =========================================================
+# =========================================================
+# ARTICOLE ȘTIINȚIFICE
+# BUILD HTML
+# =========================================================
+# =========================================================
 
 def build_html(data):
 
@@ -318,24 +362,25 @@ def build_html(data):
         data.get("continut_articol", "")
     )
 
-
-    continut = format_content(continut_text)
-
-
+    continut = format_content(
+        continut_text
+    )
 
     abstract = superscript_symbols(
         superscript_refs(
-            linkify(data.get("abstract", ""))
+            linkify(
+                data.get(
+                    "abstract",
+                    ""
+                )
+            )
         )
     )
-
-
 
     keywords = data.get(
         "keywords",
         data.get("keywords_eng", "")
     )
-
 
     kwe = superscript_symbols(
         superscript_refs(
@@ -343,21 +388,21 @@ def build_html(data):
         )
     )
 
-
-
     rez = superscript_symbols(
         superscript_refs(
-            linkify(data.get("rezumat", ""))
+            linkify(
+                data.get(
+                    "rezumat",
+                    ""
+                )
+            )
         )
     )
-
-
 
     cuvinte_cheie = data.get(
         "cuvinte_cheie",
         data.get("keywords_rom", "")
     )
-
 
     kwr = superscript_symbols(
         superscript_refs(
@@ -365,21 +410,15 @@ def build_html(data):
         )
     )
 
-
-
     autor_corespondent = data.get(
         "autor_corespondent",
         data.get("corespondent", "")
     )
 
-
-
     suport = data.get(
         "suport",
         data.get("financial_support", "")
     )
-
-
 
     licenta = data.get(
         "licenta_cc_by",
@@ -388,21 +427,35 @@ def build_html(data):
 
     # =====================================
     # Normalizare Primit / Acceptat
-    # Pentru afisare ca la Autori:
-    # DB = doar data
-    # HTML = Primit: data
     # =====================================
 
-    primit = data.get("primit", "")
+    primit = data.get(
+        "primit",
+        ""
+    )
 
-    if primit.lower().startswith("primit:"):
-        primit = primit.split(":", 1)[1].strip()
+    if primit.lower().startswith(
+        "primit:"
+    ):
 
+        primit = primit.split(
+            ":",
+            1
+        )[1].strip()
 
-    acceptat = data.get("acceptat", "")
+    acceptat = data.get(
+        "acceptat",
+        ""
+    )
 
-    if acceptat.lower().startswith("acceptat:"):
-        acceptat = acceptat.split(":", 1)[1].strip()
+    if acceptat.lower().startswith(
+        "acceptat:"
+    ):
+
+        acceptat = acceptat.split(
+            ":",
+            1
+        )[1].strip()
 
     return f"""<!DOCTYPE html>
 <html lang="ro">
@@ -413,292 +466,317 @@ def build_html(data):
 
 <title>{titlu_ro}</title>
 
-<link rel="stylesheet" href="/static/style.css">
+<link
+    rel="stylesheet"
+    href="/static/style.css"
+>
 
 </head>
 
-
 <body>
-
 
 <h1>{titlu_ro}</h1>
 
-
 <h2>{titlu_en}</h2>
 
-
-
 <div>
+
 <b>Autori:</b>
+
 {superscript_author_refs(autori)}
+
 </div>
 
-
-
 <div>
-Data publicării: {data.get('data_publicarii','')}
+
+Data publicării:
+{data.get('data_publicarii','')}
+
 </div>
 
-
-
 <div>
-Primit: {primit}
+
+Primit:
+{primit}
+
 </div>
 
-
 <div>
-Acceptat: {acceptat}
+
+Acceptat:
+{acceptat}
+
 </div>
 
-
 <div>
-Editorial Group: {data.get('editorial_grup','')}
+
+Editorial Group:
+{data.get('editorial_grup','')}
+
 </div>
 
-
-
 <div>
-DOI: {data.get('doi','')}
+
+DOI:
+{data.get('doi','')}
+
 </div>
 
-
-
 <div>
+
 Descarcă PDF:
-<a href="{data.get('descarca_pdf','')}" target="_blank">
-Click aici!
+
+<a
+    href="{data.get('descarca_pdf','')}"
+    target="_blank"
+>
+    Click aici!
 </a>
+
 </div>
-
-
 
 <hr>
-
-
 
 <h2>Abstract</h2>
 
 <p>
-<i>{abstract}</i>
+
+<i>
+{abstract}
+</i>
+
 </p>
-
-
 
 <p>
+
 {kwe}
+
 </p>
-
-
-
 
 <h2>Rezumat</h2>
 
-
 <p>
-<i>{rez}</i>
+
+<i>
+{rez}
+</i>
+
 </p>
 
-
-
 <p>
+
 {kwr}
+
 </p>
-
-
-
 
 <h2>Conținut articol</h2>
 
-
 {continut}
 
-
-
-
 <p>
+
 <b>
 {autor_corespondent}
 </b>
+
 </p>
 
-
-
 <p>
+
 <b>
 {data.get('conflict','')}
 </b>
+
 </p>
 
-
-
 <p>
+
 <b>
 {suport}
 </b>
+
 </p>
-
-
 
 <p>
+
 {licenta}
+
 </p>
 
-
-
-<img 
-src="https://www.medichub.ro/upload/photos/sigla_cc_by_25101.png"
-style="max-width:220px;">
-
-
-
+<img
+    src="https://www.medichub.ro/upload/photos/sigla_cc_by_25101.png"
+    style="max-width:220px;"
+>
 
 <h2>Bibliografie</h2>
 
-
-{format_bibliography(data.get('bibliografie',''))}
-
-
+{format_bibliography(
+    data.get(
+        'bibliografie',
+        ''
+    )
+)}
 
 </body>
 
 </html>"""
 
-# =====================================================
-# ARTICOL SIMPLU
-# =====================================================
+
+# =========================================================
+# =========================================================
+# ARTICOLE SIMPLE
+# FUNCȚII SEPARATE
+# =========================================================
+# =========================================================
+
+
+# =========================================================
+# ARTICOLE SIMPLE
+# Superscript DOAR pentru autorii din H5
+# =========================================================
 
 def superscript_simple_author_refs(text):
 
     if not text:
         return ""
 
-    # Protejam tagurile HTML/XML
-    protected = []
-
-    def protect(match):
-        protected.append(match.group(0))
-        return f"___AUTHOR_HTML_{len(protected) - 1}___"
-
-    text = re.sub(
-        r"<[^>]+>",
-        protect,
+    return re.sub(
+        r'(?<=[A-Za-zĂÂÎȘȚăâîșț\-])(\d+(?:,\d+)*)',
+        r'<sup>\1</sup>',
         text
     )
 
-    # Autor + numar:
-    # Popescu1 -> Popescu<sup>1</sup>
-    # Ionescu2 -> Ionescu<sup>2</sup>
-    # Popescu1,2 -> Popescu<sup>1,2</sup>
-    text = re.sub(
-        r"(?<=[A-Za-zĂÂÎȘȚăâîșț\-])(\d+(?:,\d+)*)",
-        r"<sup>\1</sup>",
-        text
+
+# =========================================================
+# ARTICOLE SIMPLE
+# Procesare H5
+#
+# Exemplu:
+#
+# <H5>Iris-Iuliana Adam1, Alina Ormenișan2</H5>
+#
+# devine:
+#
+# Iris-Iuliana Adam<sup>1</sup>,
+# Alina Ormenișan<sup>2</sup>
+#
+# IMPORTANT:
+# Această regulă este folosită DOAR pentru articolele
+# simple.
+# =========================================================
+
+def process_simple_h5(match):
+
+    author_text = match.group(
+        1
     )
 
-    # Punem tagurile inapoi
-    for i, tag in enumerate(protected):
+    author_text = superscript_simple_author_refs(
+        author_text
+    )
 
-        text = text.replace(
-            f"___AUTHOR_HTML_{i}___",
-            tag
-        )
+    return (
+        "\n"
+        + author_text
+        + "\n"
+    )
 
-    return text
 
-# =====================================================
-# SUPERSCRIPT AUTORI - ARTICOLE SIMPLE
-# =====================================================
+# =========================================================
+# ARTICOLE SIMPLE
+# FORMAT CONTENT
+#
+# Este separat complet de format_content().
+#
+# Motiv:
+# Nu vrem ca regulile articolelor simple să modifice
+# articolele științifice.
+# =========================================================
 
-def superscript_simple_author_refs(text):
+def format_simple_content(text):
 
     if not text:
         return ""
 
-    # Protejam tagurile HTML existente
-    protected = []
-
-    def protect(match):
-        protected.append(match.group(0))
-        return f"___AUTHOR_HTML_{len(protected) - 1}___"
+    # =====================================================
+    # H5 = ZONA AUTORILOR
+    #
+    # Aplicăm superscript DOAR aici.
+    # =====================================================
 
     text = re.sub(
-        r"<[^>]+>",
-        protect,
+        r"<H5>(.*?)</H5>",
+        process_simple_h5,
+        text,
+        flags=re.I | re.S
+    )
+
+    # =====================================================
+    # Restul conținutului
+    #
+    # Nu aplicăm superscript_author_refs().
+    # Nu modificăm numerele normale din text.
+    # =====================================================
+
+    return format_content(
         text
     )
 
-    # Autor + numar
-    #
-    # Exemple:
-    #
-    # Popescu1
-    # Popescu2
-    # Popescu1,2
-    #
-    # devin:
-    #
-    # Popescu<sup>1</sup>
-    # Popescu<sup>2</sup>
-    # Popescu<sup>1,2</sup>
 
-    text = re.sub(
-        r"(?<=[A-Za-zĂÂÎȘȚăâîșț\-])(\d+(?:,\d+)*)",
-        r"<sup>\1</sup>",
-        text
-    )
-
-    # Restauram tagurile HTML
-    for i, tag in enumerate(protected):
-
-        text = text.replace(
-            f"___AUTHOR_HTML_{i}___",
-            tag
-        )
-
-    return text
-
-
-# =====================================================
-# ARTICOL SIMPLU
-# =====================================================
+# =========================================================
+# =========================================================
+# ARTICOLE SIMPLE
+# BUILD HTML
+# =========================================================
+# =========================================================
 
 def build_simple_html(data):
+
+    # =====================================================
+    # TITLU
+    # =====================================================
 
     titlu = data.get(
         "titlu",
         ""
     ).strip()
 
+    # =====================================================
+    # CONTINUT
+    # =====================================================
+
     continut_text = data.get(
         "continut_articol",
         ""
     )
 
-    # =================================================
-    # SUPERSCRIPT PENTRU AUTORI
-    # =================================================
+    # =====================================================
+    # IMPORTANT:
+    #
+    # Pentru articole simple folosim
+    # format_simple_content().
+    #
+    # Aici se aplică superscript DOAR în H5.
+    # =====================================================
 
-    continut_text = superscript_simple_author_refs(
+    continut = format_simple_content(
         continut_text
     )
 
-    # =================================================
-    # FORMAT CONTINUT
-    # =================================================
-
-    continut = format_content(
-        continut_text
-    )
-
-    # =================================================
+    # =====================================================
     # TITLU
-    # =================================================
+    # =====================================================
 
     titlu_html = superscript_symbols(
         linkify(titlu)
     )
 
+    # =====================================================
+    # HTML FINAL
+    # =====================================================
+
     return f"""<!DOCTYPE html>
+
 <html lang="ro">
 
 <head>
@@ -710,25 +788,39 @@ def build_simple_html(data):
     <style>
 
         body {{
-            font-family: Arial, Helvetica, sans-serif;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
             line-height: 1.6;
+
             max-width: 900px;
+
             margin: 40px auto;
+
             padding: 0 20px;
+
             color: #222;
         }}
 
         h1 {{
+
             font-size: 28px;
+
             line-height: 1.3;
+
             margin-bottom: 30px;
         }}
 
         p {{
+
             margin-bottom: 15px;
         }}
 
         a {{
+
             color: #0066cc;
         }}
 
