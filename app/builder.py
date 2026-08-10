@@ -690,6 +690,33 @@ def process_simple_h5(match):
     )
 
 
+def process_simple_affiliations(text):
+
+    counter = 0
+
+    def replace_lbody(match):
+        nonlocal counter
+
+        counter += 1
+
+        content = match.group(1).strip()
+
+        return (
+            f"\n__SIMPLE_AFFILIATION__"
+            f"{counter}. "
+            f"<i>{content}</i>\n"
+        )
+
+    text = re.sub(
+        r"<LI>\s*<Lbl>.*?</Lbl>\s*<LBody>(.*?)</LBody>\s*</LI>",
+        replace_lbody,
+        text,
+        flags=re.I | re.S
+    )
+
+    return text
+
+
 # =========================================================
 # ARTICOLE SIMPLE
 # FORMAT CONTENT
