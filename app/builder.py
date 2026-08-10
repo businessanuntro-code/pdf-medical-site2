@@ -583,24 +583,95 @@ def superscript_simple_author_refs(text):
 
     return text
 
+# =====================================================
+# SUPERSCRIPT AUTORI - ARTICOLE SIMPLE
+# =====================================================
+
+def superscript_simple_author_refs(text):
+
+    if not text:
+        return ""
+
+    # Protejam tagurile HTML existente
+    protected = []
+
+    def protect(match):
+        protected.append(match.group(0))
+        return f"___AUTHOR_HTML_{len(protected) - 1}___"
+
+    text = re.sub(
+        r"<[^>]+>",
+        protect,
+        text
+    )
+
+    # Autor + numar
+    #
+    # Exemple:
+    #
+    # Popescu1
+    # Popescu2
+    # Popescu1,2
+    #
+    # devin:
+    #
+    # Popescu<sup>1</sup>
+    # Popescu<sup>2</sup>
+    # Popescu<sup>1,2</sup>
+
+    text = re.sub(
+        r"(?<=[A-Za-zĂÂÎȘȚăâîșț\-])(\d+(?:,\d+)*)",
+        r"<sup>\1</sup>",
+        text
+    )
+
+    # Restauram tagurile HTML
+    for i, tag in enumerate(protected):
+
+        text = text.replace(
+            f"___AUTHOR_HTML_{i}___",
+            tag
+        )
+
+    return text
+
+
+# =====================================================
+# ARTICOL SIMPLU
+# =====================================================
+
 def build_simple_html(data):
 
-    titlu = data.get("titlu", "").strip()
+    titlu = data.get(
+        "titlu",
+        ""
+    ).strip()
 
     continut_text = data.get(
         "continut_articol",
         ""
     )
 
+    # =================================================
+    # SUPERSCRIPT PENTRU AUTORI
+    # =================================================
+
     continut_text = superscript_simple_author_refs(
-    continut_text
-)
+        continut_text
+    )
 
-continut = format_content(
-    continut_text
-)
+    # =================================================
+    # FORMAT CONTINUT
+    # =================================================
 
-    # Aplicam linkify si pentru titlu
+    continut = format_content(
+        continut_text
+    )
+
+    # =================================================
+    # TITLU
+    # =================================================
+
     titlu_html = superscript_symbols(
         linkify(titlu)
     )
