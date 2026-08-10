@@ -170,6 +170,28 @@ def format_content(text):
     # SEPARARE IN RANDURI
     # =====================================================
 
+    # =====================================================
+# H5 = AUTORI - ARTICOLE SIMPLE
+# Superscript DOAR pentru numerele autorilor
+# =====================================================
+
+def process_simple_authors(match):
+
+    author_text = match.group(1)
+
+    author_text = superscript_simple_author_refs(
+        author_text
+    )
+
+    return f"\n{author_text}\n"
+    
+text = re.sub(
+    r"<H5>(.*?)</H5>",
+    process_simple_authors,
+    text,
+    flags=re.I | re.S
+)
+    
     lines = [
         x.strip()
         for x in text.splitlines()
