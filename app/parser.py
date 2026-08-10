@@ -251,9 +251,12 @@ def parse_simple_xml(path):
 
     for element in elements:
 
-        tag = etree.QName(element).localname
+    if not isinstance(element.tag, str):
+        continue
 
-        tag_lower = tag.lower()
+    tag = etree.QName(element).localname
+
+    tag_lower = tag.lower()
 
         if tag_lower in (
             "p",
@@ -285,6 +288,9 @@ def parse_simple_xml(path):
     first_h_index = None
 
     for index, element in enumerate(elements):
+
+        if not isinstance(element.tag, str):
+        continue
 
         tag = etree.QName(element).localname
 
