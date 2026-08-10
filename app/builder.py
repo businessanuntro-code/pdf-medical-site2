@@ -966,7 +966,6 @@ def format_simple_content(text):
     # =====================================================
     # AFILIERI
     #
-    # IMPORTANT:
     # Numerotarea se resetează la fiecare H5.
     # =====================================================
 
@@ -1008,14 +1007,129 @@ def format_simple_content(text):
     )
 
     # =====================================================
-    # SEPARARE RÂNDURI
+    # IDENTIFICARE HEADERE REPETATE DE PAGINĂ
+    #
+    # Regula este DOAR pentru articole simple.
+    #
+    # Dacă același paragraf apare de cel puțin 2 ori
+    # în XML și este un paragraf scurt, îl considerăm
+    # header de pagină.
+    #
+    # Nu eliminăm:
+    # - autori
+    # - afilieri
+    # - liste
+    # - paragrafe lungi
     # =====================================================
 
-    lines = [
+    raw_lines = [
         x.strip()
         for x in text.splitlines()
         if x.strip()
     ]
+
+    # Extragem textul curat al fiecărei linii.
+    # Ignorăm markerii introduși pentru autori și afilieri.
+
+    candidate_lines = []
+
+    for line in raw_lines:
+
+        if line.startswith("__SIMPLE_AUTHORS__"):
+            continue
+
+        if line.startswith("__SIMPLE_AFFILIATION__"):
+            continue
+
+        clean_line = re.sub(
+            r"<[^>]+>",
+            "",
+            line
+        ).strip()
+
+        if not clean_line:
+            continue
+
+        words = clean_line.split()
+
+        # Header-ele de pagină sunt de regulă scurte.
+        if 1 <= len(words) <= 12:
+
+            candidate_lines.append(
+                clean_line
+            )
+
+    # =====================================================
+    # NUMĂR DE APARIȚII
+    # =====================================================
+
+    from collections import Counter
+
+    line_counter = Counter(
+        candidate_lines
+    )
+
+    repeated_headers = {
+        line
+        for line, count in line_counter.items()
+        if count >= 2
+    }
+
+    # =====================================================
+    # ELIMINARE HEADERE REPETATE
+    #
+    # Păstrăm prima apariție numai dacă textul NU este
+    # identificat ca header repetat.
+    #
+    # Pentru un header repetat îl eliminăm complet.
+    # =====================================================
+
+    filtered_lines = []
+
+    for line in raw_lines:
+
+        # Markerii speciali trebuie păstrați.
+        if line.startswith(
+            "__SIMPLE_AUTHORS__"
+        ):
+
+            filtered_lines.append(
+                line
+            )
+
+            continue
+
+        if line.startswith(
+            "__SIMPLE_AFFILIATION__"
+        ):
+
+            filtered_lines.append(
+                line
+            )
+
+            continue
+
+        clean_line = re.sub(
+            r"<[^>]+>",
+            "",
+            line
+        ).strip()
+
+        # Dacă este un header repetat,
+        # nu îl mai introducem în articol.
+        if clean_line in repeated_headers:
+
+            continue
+
+        filtered_lines.append(
+            line
+        )
+
+    lines = filtered_lines
+
+    # =====================================================
+    # PROCESARE HTML
+    # =====================================================
 
     html = []
 
@@ -1158,6 +1272,8 @@ def format_simple_content(text):
     return "\n".join(
         html
     )
+
+
 
 
 # =========================================================
