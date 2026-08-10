@@ -671,8 +671,16 @@ def process_simple_h5(match):
         1
     )
 
+    # Superscript pentru numerele autorilor
     author_text = superscript_simple_author_refs(
         author_text
+    )
+
+    # Bold pentru intreaga zona a autorilor
+    author_text = (
+        "<strong>"
+        + author_text
+        + "</strong>"
     )
 
     return (
