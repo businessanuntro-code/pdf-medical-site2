@@ -1171,8 +1171,8 @@ def add_keywords_break(text):
         return ""
 
     return re.sub(
-        r"(<p>\s*(?:Keywords|Cuvinte cheie)\b.*?</p>)",
-        r"\1<br>",
+        r"<p>\s*(Keywords|Cuvinte cheie)(\s*:?)\s*(.*?)</p>",
+        r'<p><strong>\1\2</strong> \3</p><br>',
         text,
         flags=re.IGNORECASE | re.DOTALL
     )
