@@ -1166,6 +1166,16 @@ def format_simple_content(text):
 # BUILD HTML
 # =========================================================
 
+def add_keywords_break(text):
+    if not text:
+        return ""
+
+    return re.sub(
+        r"(<p>\s*(?:Keywords|Cuvinte cheie)\b.*?</p>)",
+        r"\1<br>",
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
 
 def build_simple_html(data):
 
