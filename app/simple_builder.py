@@ -155,10 +155,6 @@ def format_affiliations(affiliations):
 def format_keywords(keywords):
     """
     Formateaza Keywords.
-
-    Keywords: este bold.
-    Elimina spatiul de deasupra si pastreaza spatiul
-    dintre Keywords: si lista de cuvinte.
     """
 
     if not keywords:
@@ -168,9 +164,9 @@ def format_keywords(keywords):
 
     return (
         '<p class="simple-keywords">'
-        "<strong>Keywords:</strong> "
-        f"{keywords}"
-        "</p>"
+        '<strong>Keywords:</strong> '
+        f'{keywords}'
+        '</p>'
     )
 
 
