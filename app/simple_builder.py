@@ -42,6 +42,10 @@ def title_style():
          .simple-affiliation {
          font-style: italic;
          }
+
+         .simple-keywords {
+         margin-top: 0;
+         }
     </style>
     """
 
