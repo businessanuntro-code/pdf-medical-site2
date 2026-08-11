@@ -1,4 +1,11 @@
 from lxml import etree
+import re
+from collections import Counter
+
+
+# =========================================================
+# FUNCȚIE GENERALĂ
+# =========================================================
 
 
 def _text(el):
@@ -9,6 +16,13 @@ def _text(el):
     return " ".join(
         el.itertext()
     ).strip()
+
+
+# =========================================================
+# =========================================================
+# ARTICOLE ȘTIINȚIFICE
+# PARSER EXISTENT
+# =========================================================
 
 
 def parse_xml(path):
@@ -61,7 +75,9 @@ def parse_xml(path):
             if t:
                 autori.append(t)
 
-        data["autor"] = ", ".join(autori)
+        data["autor"] = ", ".join(
+            autori
+        )
 
     if root.find(".//Abstract") is not None:
 
@@ -118,6 +134,7 @@ def parse_xml(path):
     stories = root.findall(".//Story")
 
     collecting = False
+
     body = []
 
     for story in stories:
@@ -152,6 +169,7 @@ def parse_xml(path):
     # =====================================================
 
     collecting = False
+
     refs = []
 
     for story in stories:
@@ -200,7 +218,8 @@ def parse_xml(path):
     )
 
     # =====================================================
-    # CONFLICT DE INTERESE / SUPORT FINANCIAR / CC-BY
+    # CONFLICT DE INTERESE /
+    # SUPORT FINANCIAR / CC-BY
     # =====================================================
 
     for story in stories:
@@ -257,32 +276,549 @@ def parse_xml(path):
 
 # =========================================================
 # =========================================================
-# ARTICOL SIMPLU
+# ARTICOLE SIMPLE
+# FUNCȚII SPECIFICE
+# =========================================================
+
+
+def _simple_clean_text(text):
+
+    """
+    Curăță un fragment XML pentru comparații.
+
+    Elimină tagurile XML și normalizează spațiile.
+    """
+
+    if not text:
+        return ""
+
+    text = re.sub(
+        r"<[^>]+>",
+        " ",
+        text
+    )
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    )
+
+    return text.strip()
+
+
+# =========================================================
+# ARTICOLE SIMPLE
+# ELIMINARE H2
+# =========================================================
+
+
+def _simple_remove_h2(text):
+
+    """
+    Elimină COMPLET toate elementele H2
+    din articolele simple.
+
+    Exemple acceptate:
+
+    <H2>Text</H2>
+
+    <H2 id="123">Text</H2>
+
+    <H2 class="titlu">Text</H2>
+
+    Inclusiv H2 cu spații sau linii noi.
+    """
+
+    if not text:
+        return ""
+
+    return re.sub(
+        r"<H2\b[^>]*>.*?</H2\s*>",
+        "",
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+
+# =========================================================
+# ARTICOLE SIMPLE
+# AUTORI H5
+# =========================================================
+
+
+def _simple_process_authors(text):
+
+    """
+    H5 = autori.
+
+    Reguli:
+
+    - autorii sunt bold;
+    - numerele de lângă autori sunt superscript.
+
+    Exemplu:
+
+    Iris-Iuliana Adam1, Alina Ormenișan2
+
+    devine:
+
+    <strong>
+    Iris-Iuliana Adam<sup>1</sup>,
+    Alina Ormenișan<sup>2</sup>
+    </strong>
+    """
+
+    if not text:
+        return ""
+
+    def replace_h5(match):
+
+        author_text = match.group(1)
+
+        # -------------------------------------------------
+        # NUMERELE AUTORILOR
+        # -------------------------------------------------
+
+        author_text = re.sub(
+            r"(?<=[A-Za-zĂÂÎȘȚăâîșț\-])"
+            r"(\d+(?:,\d+)*)"
+            r"(?=\s*(?:,|;|$))",
+            r"<sup>\1</sup>",
+            author_text
+        )
+
+        # -------------------------------------------------
+        # BOLD
+        # -------------------------------------------------
+
+        return (
+            "<H5>"
+            "<strong>"
+            + author_text
+            + "</strong>"
+            "</H5>"
+        )
+
+    return re.sub(
+        r"<H5\b[^>]*>(.*?)</H5\s*>",
+        replace_h5,
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+
+# =========================================================
+# ARTICOLE SIMPLE
+# AFILIERI
+# =========================================================
+
+
+def _simple_process_affiliations(text):
+
+    """
+    Procesează afiliările din LI/LBody.
+
+    Reguli:
+
+    1. afiliere
+    2. afiliere
+    3. afiliere
+
+    Numerotarea se resetează la fiecare H5.
+
+    Afilierea este italic.
+    """
+
+    if not text:
+        return ""
+
+    # -----------------------------------------------------
+    # Împărțim documentul după H5.
+    #
+    # H5-ul marchează începutul unui nou grup
+    # de autori și, implicit, resetarea numerotării.
+    # -----------------------------------------------------
+
+    parts = re.split(
+        r"(<H5\b[^>]*>.*?</H5\s*>)",
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+    result = []
+
+    counter = 0
+
+    for part in parts:
+
+        # -------------------------------------------------
+        # H5
+        # -------------------------------------------------
+
+        if re.match(
+            r"<H5\b",
+            part,
+            flags=re.IGNORECASE
+        ):
+
+            # RESETARE
+            counter = 0
+
+            result.append(
+                part
+            )
+
+            continue
+
+        # -------------------------------------------------
+        # LI / LBody
+        # -------------------------------------------------
+
+        def replace_li(match):
+
+            nonlocal counter
+
+            counter += 1
+
+            affiliation_text = (
+                match.group(1)
+                .strip()
+            )
+
+            return (
+                "\n"
+                "<p>"
+                "<i>"
+                f"{counter}. "
+                f"{affiliation_text}"
+                "</i>"
+                "</p>"
+                "\n"
+            )
+
+        part = re.sub(
+            r"<LI\b[^>]*>"
+            r"\s*"
+            r"(?:"
+            r"<Lbl\b[^>]*>.*?</Lbl>"
+            r"\s*"
+            r")?"
+            r"<LBody\b[^>]*>"
+            r"(.*?)"
+            r"</LBody\s*>"
+            r"\s*"
+            r"</LI\s*>",
+            replace_li,
+            part,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+
+        result.append(
+            part
+        )
+
+    return "".join(
+        result
+    )
+
+
+# =========================================================
+# ARTICOLE SIMPLE
+# KEYWORDS
+# =========================================================
+
+
+def _simple_process_keywords(text):
+
+    """
+    Procesează rândurile cu:
+
+    Keywords:
+    Cuvinte-cheie:
+    Cuvinte cheie:
+
+    Reguli:
+
+    - eticheta este bold;
+    - se păstrează conținutul;
+    - se introduce <br> DUPĂ rândul Keywords.
+    """
+
+    if not text:
+        return ""
+
+    # -----------------------------------------------------
+    # Cazul în care Keywords este într-un paragraf XML.
+    # -----------------------------------------------------
+
+    def replace_paragraph(match):
+
+        opening = match.group(1)
+
+        content = match.group(2)
+
+        closing = match.group(3)
+
+        clean = _simple_clean_text(
+            content
+        )
+
+        if not re.match(
+            r"^(Keywords|Cuvinte[- ]cheie)\s*:?",
+            clean,
+            flags=re.IGNORECASE
+        ):
+
+            return match.group(0)
+
+        # -------------------------------------------------
+        # BOLD PENTRU ETICHETĂ
+        # -------------------------------------------------
+
+        content = re.sub(
+            r"^(Keywords|Cuvinte[- ]cheie)"
+            r"(\s*:?)",
+            r"<strong>\1\2</strong> ",
+            content,
+            count=1,
+            flags=re.IGNORECASE
+        )
+
+        return (
+            opening
+            + content.strip()
+            + closing
+            + "<br>"
+        )
+
+    text = re.sub(
+        r"(<(?:p|P|NormalParagraphStyle)\b[^>]*>)"
+        r"(.*?)"
+        r"(</(?:p|P|NormalParagraphStyle)\s*>)",
+        replace_paragraph,
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+    # -----------------------------------------------------
+    # Caz de rezervă:
+    #
+    # dacă Keywords nu a fost împachetat într-un paragraf,
+    # îl procesăm și ca linie simplă.
+    # -----------------------------------------------------
+
+    lines = text.splitlines()
+
+    processed_lines = []
+
+    for line in lines:
+
+        clean = _simple_clean_text(
+            line
+        )
+
+        if re.match(
+            r"^(Keywords|Cuvinte[- ]cheie)\s*:?",
+            clean,
+            flags=re.IGNORECASE
+        ):
+
+            # Evităm să procesăm din nou dacă
+            # deja conține strong.
+            if "<strong>" not in line.lower():
+
+                line = re.sub(
+                    r"^(Keywords|Cuvinte[- ]cheie)"
+                    r"(\s*:?)",
+                    r"<strong>\1\2</strong> ",
+                    line,
+                    count=1,
+                    flags=re.IGNORECASE
+                )
+
+            line = (
+                line
+                + "<br>"
+            )
+
+        processed_lines.append(
+            line
+        )
+
+    return "\n".join(
+        processed_lines
+    )
+
+
+# =========================================================
+# ARTICOLE SIMPLE
+# ELIMINARE HEADER-E REPETATE
+# =========================================================
+
+
+def _simple_remove_duplicate_headers(text):
+
+    """
+    Elimină header-ele repetate de pagină.
+
+    Regula:
+
+    - identificăm texte scurte;
+    - dacă același text apare de cel puțin 2 ori,
+      îl considerăm header repetat;
+    - îl eliminăm.
+
+    NU procesăm:
+
+    - H5;
+    - afiliere;
+    - elemente cu strong/sup introduse pentru autori.
+    """
+
+    if not text:
+        return ""
+
+    # -----------------------------------------------------
+    # Extragem paragrafele.
+    # -----------------------------------------------------
+
+    paragraph_pattern = (
+        r"<(?:p|P|NormalParagraphStyle)\b[^>]*>"
+        r"(.*?)"
+        r"</(?:p|P|NormalParagraphStyle)\s*>"
+    )
+
+    paragraphs = re.findall(
+        paragraph_pattern,
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+    candidates = []
+
+    for paragraph in paragraphs:
+
+        clean = _simple_clean_text(
+            paragraph
+        )
+
+        if not clean:
+            continue
+
+        # -------------------------------------------------
+        # Nu considerăm autorii header.
+        # -------------------------------------------------
+
+        if "<H5" in paragraph.upper():
+            continue
+
+        # -------------------------------------------------
+        # Header-ele sunt de regulă scurte.
+        # -------------------------------------------------
+
+        words = clean.split()
+
+        if 1 <= len(words) <= 12:
+
+            candidates.append(
+                clean.casefold()
+            )
+
+    counter = Counter(
+        candidates
+    )
+
+    repeated_headers = {
+        value
+        for value, count in counter.items()
+        if count >= 2
+    }
+
+    if not repeated_headers:
+        return text
+
+    # -----------------------------------------------------
+    # Eliminăm paragrafele repetate.
+    # -----------------------------------------------------
+
+    def remove_repeated(match):
+
+        content = match.group(1)
+
+        clean = _simple_clean_text(
+            content
+        )
+
+        if clean.casefold() in repeated_headers:
+
+            return ""
+
+        return match.group(0)
+
+    return re.sub(
+        paragraph_pattern,
+        remove_repeated,
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+
+# =========================================================
+# ARTICOLE SIMPLE
+# NORMALIZARE
+# =========================================================
+
+
+def _simple_normalize(text):
+
+    if not text:
+        return ""
+
+    # -----------------------------------------------------
+    # Eliminăm spațiile excesive.
+    # -----------------------------------------------------
+
+    text = re.sub(
+        r"\n[ \t]+",
+        "\n",
+        text
+    )
+
+    text = re.sub(
+        r"\n{3,}",
+        "\n\n",
+        text
+    )
+
+    return text.strip()
+
+
+# =========================================================
+# =========================================================
+# ARTICOLE SIMPLE
+# PARSER
 # =========================================================
 #
-# REGULA:
+# REGULA DE BAZĂ:
 #
 # PARAGRAFUL 2 + PRIMUL H TAG
 #             ↓
-#        TITLU PRINCIPAL
+#       TITLU PRINCIPAL
 #
-# RESTUL CONTINUTULUI
+# RESTUL
 #             ↓
-#        CONTINUT ARTICOL
+#       CONTINUT ARTICOL
 #
-# IMPORTANT:
-#
-# Regulile de mai jos sunt folosite DOAR pentru
-# articolele simple.
-#
-# Fluxul articolelor stiintifice de mai sus
-# ramane neschimbat.
 # =========================================================
 
 
 def parse_simple_xml(path):
 
-    tree = etree.parse(path)
+    tree = etree.parse(
+        path
+    )
+
     root = tree.getroot()
 
     data = {
@@ -299,22 +835,17 @@ def parse_simple_xml(path):
     )
 
     # =====================================================
-    # PARAGRAFUL 2
+    # PARAGRAFE
     # =====================================================
 
     paragraph_elements = []
 
     for element in elements:
 
-        # IMPORTANT:
-        # Unele noduri lxml pot avea .tag ca obiect
-        # special, nu ca string XML.
-
         if not isinstance(
             element.tag,
             str
         ):
-
             continue
 
         tag = etree.QName(
@@ -340,13 +871,19 @@ def parse_simple_xml(path):
                     element
                 )
 
+    # =====================================================
+    # PARAGRAFUL 2
+    # =====================================================
+
     paragraph_2 = None
 
     if len(
         paragraph_elements
     ) >= 2:
 
-        paragraph_2 = paragraph_elements[1]
+        paragraph_2 = (
+            paragraph_elements[1]
+        )
 
     paragraph_2_text = _text(
         paragraph_2
@@ -357,6 +894,7 @@ def parse_simple_xml(path):
     # =====================================================
 
     first_h = None
+
     first_h_index = None
 
     for index, element in enumerate(
@@ -367,7 +905,6 @@ def parse_simple_xml(path):
             element.tag,
             str
         ):
-
             continue
 
         tag = etree.QName(
@@ -403,7 +940,7 @@ def parse_simple_xml(path):
     )
 
     # =====================================================
-    # CONSTRUIRE TITLUL
+    # CONSTRUIRE TITLU
     # =====================================================
 
     title_parts = []
@@ -427,7 +964,7 @@ def parse_simple_xml(path):
     )
 
     # =====================================================
-    # CONTINUT ARTICOL SIMPLU
+    # CONȚINUT ARTICOL
     # =====================================================
 
     body = []
@@ -442,22 +979,20 @@ def parse_simple_xml(path):
                 element.tag,
                 str
             ):
-
                 continue
 
             # -------------------------------------------------
-            # Nu includem elementele de dinaintea sau egal
-            # cu primul H folosit pentru construirea titlului.
+            # Nu includem elementele până la primul H.
             # -------------------------------------------------
 
             if index <= first_h_index:
 
                 continue
 
-            # =================================================
+            # -------------------------------------------------
             # Evităm elementele descendente care sunt deja
-            # incluse în elementele părinte.
-            # =================================================
+            # incluse în elementul părinte.
+            # -------------------------------------------------
 
             parent = element.getparent()
 
@@ -465,44 +1000,19 @@ def parse_simple_xml(path):
 
                 if parent in elements:
 
-                    parent_index = elements.index(
-                        parent
+                    parent_index = (
+                        elements.index(
+                            parent
+                        )
                     )
 
                     if parent_index > first_h_index:
 
                         continue
 
-            # =================================================
-            # ELIMINARE H2
-            # =================================================
-            #
-            # IMPORTANT:
-            #
-            # ACEASTĂ REGULĂ ESTE DOAR PENTRU
-            # ARTICOLELE SIMPLE.
-            #
-            # Orice H2 care apare DUPĂ primul H
-            # este eliminat complet.
-            #
-            # Exemplu:
-            #
-            # <H2>IOB Conference abstracts</H2>
-            #
-            # nu va mai fi introdus în body.
-            # =================================================
-
-            tag_name = etree.QName(
-                element
-            ).localname.upper()
-
-            if tag_name == "H2":
-
-                continue
-
-            # =================================================
-            # TRANSFORMARE ELEMENT XML ÎN TEXT XML
-            # =================================================
+            # -------------------------------------------------
+            # Serializăm elementul.
+            # -------------------------------------------------
 
             xml = etree.tostring(
                 element,
@@ -515,8 +1025,114 @@ def parse_simple_xml(path):
                     xml
                 )
 
-    data["continut_articol"] = "\n".join(
+    # =====================================================
+    # XML BRUT
+    # =====================================================
+
+    content = "\n".join(
         body
     )
+
+    # =====================================================
+    # REGULA 1
+    # ELIMINARE H2
+    #
+    # ESTE PRIMA REGULĂ APLICATĂ.
+    #
+    # Deci H2 nu mai poate ajunge în builder.
+    # =====================================================
+
+    content = _simple_remove_h2(
+        content
+    )
+
+    # =====================================================
+    # REGULA 2
+    # ELIMINARE HEADER-E REPETATE
+    # =====================================================
+
+    content = (
+        _simple_remove_duplicate_headers(
+            content
+        )
+    )
+
+    # =====================================================
+    # REGULA 3
+    # H5 = AUTORI
+    #
+    # - BOLD
+    # - NUMERE SUPERSCRIPT
+    # =====================================================
+
+    content = (
+        _simple_process_authors(
+            content
+        )
+    )
+
+    # =====================================================
+    # REGULA 4
+    # AFILIERI
+    #
+    # - 1.
+    # - 2.
+    # - 3.
+    #
+    # RESET LA FIECARE H5.
+    #
+    # ITALIC.
+    # =====================================================
+
+    content = (
+        _simple_process_affiliations(
+            content
+        )
+    )
+
+    # =====================================================
+    # REGULA 5
+    # KEYWORDS / CUVINTE-CHEIE
+    #
+    # - BOLD
+    # - SPAȚIERE
+    # - <br> DUPĂ RÂND
+    # =====================================================
+
+    content = (
+        _simple_process_keywords(
+            content
+        )
+    )
+
+    # =====================================================
+    # REGULA 6
+    # PROTECȚIE FINALĂ
+    #
+    # Eliminăm H2 încă o dată.
+    #
+    # Este intenționat.
+    #
+    # Dacă vreunul dintre pașii anteriori ar păstra
+    # accidental un H2, acesta este eliminat aici.
+    # =====================================================
+
+    content = _simple_remove_h2(
+        content
+    )
+
+    # =====================================================
+    # NORMALIZARE FINALĂ
+    # =====================================================
+
+    content = _simple_normalize(
+        content
+    )
+
+    # =====================================================
+    # SALVARE
+    # =====================================================
+
+    data["continut_articol"] = content
 
     return data
