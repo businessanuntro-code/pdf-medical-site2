@@ -331,12 +331,13 @@ def build_simple_article(article):
     # -----------------------------------------------------
 
     if title_ro:
-
-        html.append(
-            '<h4 class="simple-title-ro">'
-            f"{escape_html(title_ro)}"
-            "</h4>"
+         html.append(
+             '<h4 class="simple-title-ro">'
+             f"{escape_html(title_ro)}"
+             "</h4>"
         )
+
+    html.append("<br>")
 
     # -----------------------------------------------------
     # AUTORI
