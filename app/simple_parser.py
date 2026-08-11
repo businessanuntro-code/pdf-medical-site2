@@ -1,4 +1,4 @@
-```python
+
 import re
 import xml.etree.ElementTree as ET
 
@@ -688,4 +688,4 @@ def parse_simple_xml(xml_path):
             []
         )
     }
-```
+
