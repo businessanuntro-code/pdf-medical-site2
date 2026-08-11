@@ -67,7 +67,7 @@ return templates.TemplateResponse(
     "index.html",
     {"request": request}
 )
-```
+
 
 # =========================================================
 
@@ -112,7 +112,7 @@ return templates.TemplateResponse(
 @app.post("/upload/")
 async def upload(file: UploadFile):
 
-```
+
 file_id = str(uuid.uuid4())
 
 # -----------------------------------------------------
@@ -167,7 +167,7 @@ return RedirectResponse(
     url=f"/article/{file_id}",
     status_code=302
 )
-```
+
 
 # =========================================================
 
@@ -216,7 +216,7 @@ return RedirectResponse(
 @app.post("/upload-simple/")
 async def upload_simple(file: UploadFile):
 
-```
+
 file_id = str(uuid.uuid4())
 
 # -----------------------------------------------------
@@ -273,7 +273,7 @@ return RedirectResponse(
     url=f"/article/{file_id}",
     status_code=302
 )
-```
+
 
 # =========================================================
 
@@ -294,7 +294,7 @@ return RedirectResponse(
 @app.get("/article/{file_id}", response_class=HTMLResponse)
 def article(file_id: str):
 
-```
+
 path = f"{OUTPUT_DIR}/{file_id}.html"
 
 if not os.path.exists(path):
@@ -309,7 +309,7 @@ with open(path, "r", encoding="utf-8") as f:
     return HTMLResponse(
         f.read()
     )
-```
+
 
 # ---------------------------------------------------------
 
@@ -328,7 +328,7 @@ with open(path, "r", encoding="utf-8") as f:
 @app.post("/regenerate")
 async def regenerate(data: dict = Body(...)):
 
-```
+
 html = build_html(data)
 
 return JSONResponse({
