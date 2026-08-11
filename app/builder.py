@@ -184,7 +184,7 @@ def format_content(text):
     # -----------------------------------------------------
 
     text = re.sub(
-        r"<imagine\d+[^>]*\/?>",
+        r"<imagine\d+[^>]*/?>",
         "",
         text,
         flags=re.I
@@ -573,7 +573,7 @@ def build_html(data):
     # =====================================================
     # HTML ARTICOL ȘTIINȚIFIC
     #
-    # ACEASTĂ SECȚIUNE ESTE PENTRU ARTICOLE ȘTIINȚIFICE.
+    # NU MODIFICĂM FLUXUL ȘTIINȚIFIC.
     # =====================================================
 
     return f"""<!DOCTYPE html>
@@ -758,7 +758,7 @@ Bibliografie
 
 </body>
 
-</html>
+</html>"""
 
 
 # =========================================================
@@ -772,17 +772,6 @@ Bibliografie
 # =========================================================
 # ARTICOLE SIMPLE
 # AUTORI
-#
-# Exemplu:
-#
-# Iris-Iuliana Adam1, Alina Ormenișan2
-#
-# devine:
-#
-# Iris-Iuliana Adam<sup>1</sup>,
-# Alina Ormenișan<sup>2</sup>
-#
-# Regula se aplică DOAR în H5.
 # =========================================================
 
 
@@ -812,7 +801,8 @@ def superscript_simple_author_refs(text):
         text
     )
 
-    # Autor + număr
+    # Numerele autorilor devin superscript.
+    # Regula se aplică numai în H5.
 
     text = re.sub(
         r"(?<=[A-Za-zĂÂÎȘȚăâîșț\-])"
@@ -838,10 +828,6 @@ def superscript_simple_author_refs(text):
 # =========================================================
 # ARTICOLE SIMPLE
 # H5 = AUTORI
-#
-# Autorii:
-# - bold
-# - numere superscript
 # =========================================================
 
 
@@ -878,19 +864,6 @@ def process_simple_h5(match):
 # =========================================================
 # ARTICOLE SIMPLE
 # AFILIERI
-#
-# Numerotarea se RESETEAZĂ la fiecare H5.
-#
-# Exemplu:
-#
-# AUTORI 1
-# 1. afiliere
-# 2. afiliere
-#
-# AUTORI 2
-# 1. afiliere
-# 2. afiliere
-# 3. afiliere
 # =========================================================
 
 
@@ -1008,7 +981,7 @@ def format_simple_content(text):
     # -----------------------------------------------------
 
     text = re.sub(
-        r"<imagine\d+[^>]*\/?>",
+        r"<imagine\d+[^>]*/?>",
         "",
         text,
         flags=re.I
@@ -1032,8 +1005,6 @@ def format_simple_content(text):
 
     # =====================================================
     # AFILIERI
-    #
-    # Numerotarea se resetează la fiecare H5.
     # =====================================================
 
     text = process_simple_affiliations(
@@ -1042,14 +1013,6 @@ def format_simple_content(text):
 
     # =====================================================
     # H4
-    #
-    # În articole simple:
-    #
-    # H4 poate reprezenta:
-    # - titlu principal
-    # - titlu secundar
-    #
-    # Le afișăm cu bold.
     # =====================================================
 
     text = re.sub(
@@ -1094,14 +1057,7 @@ def format_simple_content(text):
 
     # =====================================================
     # IDENTIFICARE HEADERE REPETATE DE PAGINĂ
-    #
-    # DOAR PENTRU ARTICOLE SIMPLE.
-    #
-    # Dacă același paragraf scurt apare de cel puțin
-    # două ori, îl considerăm header de pagină.
-    #
-    # IMPORTANT:
-    # Markerii pentru H4, H5 și afilieri sunt excluși.
+    # DOAR PENTRU ARTICOLE SIMPLE
     # =====================================================
 
     raw_lines = [
@@ -1170,8 +1126,6 @@ def format_simple_content(text):
 
     for line in raw_lines:
 
-        # Autorii trebuie păstrați.
-
         if line.startswith(
             "__SIMPLE_AUTHORS__"
         ):
@@ -1182,8 +1136,6 @@ def format_simple_content(text):
 
             continue
 
-        # Afilierile trebuie păstrate.
-
         if line.startswith(
             "__SIMPLE_AFFILIATION__"
         ):
@@ -1193,8 +1145,6 @@ def format_simple_content(text):
             )
 
             continue
-
-        # H4 trebuie păstrate.
 
         if line.startswith(
             "__SIMPLE_H4__"
@@ -1343,13 +1293,6 @@ def format_simple_content(text):
 
         # -------------------------------------------------
         # KEYWORDS
-        #
-        # Doar pentru articole simple.
-        #
-        # Keywords:
-        # Cuvinte cheie:
-        #
-        # devin bold.
         # -------------------------------------------------
 
         processed = re.sub(
@@ -1360,10 +1303,7 @@ def format_simple_content(text):
         )
 
         # -------------------------------------------------
-        # <BR> DUPĂ KEYWORDS
-        #
-        # Dacă linia începe cu Keywords sau Cuvinte cheie,
-        # adăugăm un <br> la final.
+        # IDENTIFICARE KEYWORDS
         # -------------------------------------------------
 
         is_keywords = re.match(
@@ -1479,7 +1419,7 @@ def add_keywords_break(text):
         r"(\s*:?)\s*"
         r"(.*?)"
         r"</p>",
-        r'<p><strong>\1\2</strong> \3</p><br>',
+        r"<p><strong>\1\2</strong> \3</p><br>",
         text,
         flags=re.IGNORECASE | re.DOTALL
     )
