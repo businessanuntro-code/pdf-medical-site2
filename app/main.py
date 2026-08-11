@@ -6,29 +6,32 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
+
 # =========================================================
-
+# =========================================================
 # IMPORTURI - ARTICOLE STIINTIFICE
-
+# =========================================================
 # =========================================================
 
 from app.parser import parse_xml
 from app.builder import build_html
 from app.api_client import publish_article
 
+
 # =========================================================
-
+# =========================================================
 # IMPORTURI - ARTICOLE SIMPLE
-
+# =========================================================
 # =========================================================
 
 from app.simple_parser import parse_simple_xml
 from app.simple_builder import build_simple_html
 
+
 # =========================================================
-
+# =========================================================
 # CONFIGURARE APLICATIE
-
+# =========================================================
 # =========================================================
 
 app = FastAPI()
@@ -41,301 +44,240 @@ OUTPUT_DIR = "outputs"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+
 # =========================================================
-
-# STATIC FILES
-
+# STATIC FILES - COMUN
 # =========================================================
 
 app.mount(
-"/static",
-StaticFiles(directory="uploads"),
-name="static"
+    "/static",
+    StaticFiles(directory="uploads"),
+    name="static"
 )
 
+
 # =========================================================
-
+# =========================================================
 # HOME PAGE - COMUN
-
+# =========================================================
 # =========================================================
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
 
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request}
+    )
 
-return templates.TemplateResponse(
-    "index.html",
-    {"request": request}
-)
-
-
-# =========================================================
 
 # =========================================================
-
+# =========================================================
 # ARTICOLE STIINTIFICE
-
 # =========================================================
-
 # =========================================================
-
 #
-
-# Flux:
-
-#
-
 # XML
-
-# ↓
-
+#   ↓
 # parser.py
-
-# ↓
-
+#   ↓
 # builder.py
-
-# ↓
-
+#   ↓
 # publish_article()
-
-# ↓
-
+#   ↓
 # HTML
-
 #
-
-# Aceasta zona pastreaza fluxul existent.
-
+# ACEASTA ZONA ESTE PENTRU ARTICOLELE STIINTIFICE.
+#
 # =========================================================
 
 @app.post("/upload/")
 async def upload(file: UploadFile):
 
+    # -----------------------------------------------------
+    # 1. Salvare XML
+    # -----------------------------------------------------
 
-file_id = str(uuid.uuid4())
+    file_id = str(uuid.uuid4())
 
-# -----------------------------------------------------
-# 1. Salvare XML
-# -----------------------------------------------------
+    xml_path = f"{UPLOAD_DIR}/{file_id}.xml"
 
-xml_path = f"{UPLOAD_DIR}/{file_id}.xml"
+    content = await file.read()
 
-content = await file.read()
+    with open(xml_path, "wb") as f:
+        f.write(content)
 
-with open(xml_path, "wb") as f:
-    f.write(content)
+    # -----------------------------------------------------
+    # 2. PARSER - ARTICOL STIINTIFIC
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 2. PARSER STIINTIFIC
-# -----------------------------------------------------
+    data = parse_xml(xml_path)
 
-data = parse_xml(xml_path)
+    # -----------------------------------------------------
+    # 3. BUILDER - ARTICOL STIINTIFIC
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 3. BUILDER STIINTIFIC
-# -----------------------------------------------------
+    html = build_html(data)
 
-html = build_html(data)
+    # -----------------------------------------------------
+    # 4. Adaugare HTML in dictionar
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 4. Adaugare HTML in dictionar
-# -----------------------------------------------------
+    data["continut_html"] = html
 
-data["continut_html"] = html
+    # -----------------------------------------------------
+    # 5. Publicare articol in baza de date
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 5. Publicare articol in baza de date
-# -----------------------------------------------------
+    publish_article(data)
 
-publish_article(data)
+    # -----------------------------------------------------
+    # 6. Salvare HTML local
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 6. Salvare HTML local
-# -----------------------------------------------------
+    html_path = f"{OUTPUT_DIR}/{file_id}.html"
 
-html_path = f"{OUTPUT_DIR}/{file_id}.html"
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html)
 
-with open(html_path, "w", encoding="utf-8") as f:
-    f.write(html)
+    # -----------------------------------------------------
+    # 7. Redirect catre articol
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 7. Redirect catre articol
-# -----------------------------------------------------
+    return RedirectResponse(
+        url=f"/article/{file_id}",
+        status_code=302
+    )
 
-return RedirectResponse(
-    url=f"/article/{file_id}",
-    status_code=302
-)
-
-
-# =========================================================
 
 # =========================================================
-
+# =========================================================
 # ARTICOLE SIMPLE
-
 # =========================================================
-
 # =========================================================
-
 #
-
-# Flux:
-
-#
-
 # XML
-
-# ↓
-
+#   ↓
 # simple_parser.py
-
-# ↓
-
+#   ↓
 # simple_builder.py
-
-# ↓
-
+#   ↓
 # HTML
-
 #
-
-# IMPORTANT:
-
-# Acest flux este separat de articolele stiintifice.
-
+# ACEASTA ZONA ESTE COMPLET SEPARATA
+# DE FLUXUL ARTICOLELOR STIINTIFICE.
 #
-
-# Pentru moment NU trimitem articolul simplu in baza de date.
-
-# Mai intai verificam si perfectionam HTML-ul generat.
-
+# Momentan NU salvam articolul simplu in DB.
+# Mai intai testam parserul si builderul.
+#
 # =========================================================
 
 @app.post("/upload-simple/")
 async def upload_simple(file: UploadFile):
 
+    # -----------------------------------------------------
+    # 1. Salvare XML
+    # -----------------------------------------------------
 
-file_id = str(uuid.uuid4())
+    file_id = str(uuid.uuid4())
 
-# -----------------------------------------------------
-# 1. Salvare XML
-# -----------------------------------------------------
+    xml_path = f"{UPLOAD_DIR}/{file_id}.xml"
 
-xml_path = f"{UPLOAD_DIR}/{file_id}.xml"
+    content = await file.read()
 
-content = await file.read()
+    with open(xml_path, "wb") as f:
+        f.write(content)
 
-with open(xml_path, "wb") as f:
-    f.write(content)
+    # -----------------------------------------------------
+    # 2. PARSER - ARTICOL SIMPLU
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 2. PARSER ARTICOL SIMPLU
-# -----------------------------------------------------
+    data = parse_simple_xml(xml_path)
 
-data = parse_simple_xml(xml_path)
+    # -----------------------------------------------------
+    # 3. BUILDER - ARTICOL SIMPLU
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 3. BUILDER ARTICOL SIMPLU
-# -----------------------------------------------------
+    html = build_simple_html(data)
 
-html = build_simple_html(data)
+    # -----------------------------------------------------
+    # 4. Adaugare HTML in dictionar
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 4. Adaugare HTML in dictionar
-# -----------------------------------------------------
+    data["continut_html"] = html
 
-data["continut_html"] = html
+    # -----------------------------------------------------
+    # 5. PUBLICARE IN DB
+    #
+    # DEZACTIVATA MOMENTAN.
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 5. PUBLICARE IN DB
-#
-# Momentan este dezactivata intentionat.
-# -----------------------------------------------------
+    # publish_article(data)
 
-# publish_article(data)
+    # -----------------------------------------------------
+    # 6. Salvare HTML local
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 6. Salvare HTML local
-# -----------------------------------------------------
+    html_path = f"{OUTPUT_DIR}/{file_id}.html"
 
-html_path = f"{OUTPUT_DIR}/{file_id}.html"
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html)
 
-with open(html_path, "w", encoding="utf-8") as f:
-    f.write(html)
+    # -----------------------------------------------------
+    # 7. Redirect catre articol
+    # -----------------------------------------------------
 
-# -----------------------------------------------------
-# 7. Redirect catre articol
-# -----------------------------------------------------
+    return RedirectResponse(
+        url=f"/article/{file_id}",
+        status_code=302
+    )
 
-return RedirectResponse(
-    url=f"/article/{file_id}",
-    status_code=302
-)
-
-
-# =========================================================
 
 # =========================================================
-
+# =========================================================
 # RUTE COMUNE
-
+# =========================================================
 # =========================================================
 
+
 # =========================================================
-
-# ---------------------------------------------------------
-
 # ARTICLE PAGE
-
-# ---------------------------------------------------------
+# =========================================================
 
 @app.get("/article/{file_id}", response_class=HTMLResponse)
 def article(file_id: str):
 
+    path = f"{OUTPUT_DIR}/{file_id}.html"
 
-path = f"{OUTPUT_DIR}/{file_id}.html"
+    if not os.path.exists(path):
 
-if not os.path.exists(path):
+        return HTMLResponse(
+            "<h1>Article not found</h1>",
+            status_code=404
+        )
 
-    return HTMLResponse(
-        "<h1>Article not found</h1>",
-        status_code=404
-    )
+    with open(path, "r", encoding="utf-8") as f:
 
-with open(path, "r", encoding="utf-8") as f:
-
-    return HTMLResponse(
-        f.read()
-    )
+        return HTMLResponse(
+            f.read()
+        )
 
 
-# ---------------------------------------------------------
-
-# REGENERATE
-
+# =========================================================
+# REGENERATE - ARTICOLE STIINTIFICE
+# =========================================================
 #
-
-# IMPORTANT:
-
-# Ramane pe builderul articolelor stiintifice.
-
-# Nu modificam acest flux acum.
-
-# ---------------------------------------------------------
+# Ramane conectat la builder.py.
+# Nu folosim simple_builder.py aici.
+#
+# =========================================================
 
 @app.post("/regenerate")
 async def regenerate(data: dict = Body(...)):
 
+    html = build_html(data)
 
-html = build_html(data)
-
-return JSONResponse({
-
-    "success": True,
-
-    "continut_html": html
-
-})
-
+    return JSONResponse({
+        "success": True,
+        "continut_html": html
+    })
