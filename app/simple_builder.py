@@ -156,6 +156,8 @@ def format_keywords(keywords):
     Formateaza Keywords.
 
     Keywords: este bold.
+    Elimina spatiul de deasupra si pastreaza spatiul
+    dintre Keywords: si lista de cuvinte.
     """
 
     if not keywords:
@@ -168,7 +170,6 @@ def format_keywords(keywords):
         "<strong>Keywords:</strong> "
         f"{keywords}"
         "</p>"
-        "<br>"
     )
 
 
