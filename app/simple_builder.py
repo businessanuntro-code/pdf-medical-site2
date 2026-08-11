@@ -38,6 +38,10 @@ def title_style():
          margin-top: 0;
          font-style: italic;
          }
+
+         .simple-affiliation {
+         font-style: italic;
+         }
     </style>
     """
 
