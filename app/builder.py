@@ -725,13 +725,31 @@ def remove_simple_h2(text):
     if not text:
         return ""
 
-    return re.sub(
-        r"<H2\b[^>]*>.*?</H2\s*>",
+    # Elimină blocuri H2 HTML/XML:
+    # <H2>text</H2>
+    # <h2>text</h2>
+    # <H2 class="x">text</H2>
+    # inclusiv dacă există spații/newline-uri.
+
+    text = re.sub(
+        r"<\s*h2\b[^>]*>.*?<\s*/\s*h2\s*>",
         "",
         text,
         flags=re.IGNORECASE | re.DOTALL
     )
 
+    # Siguranță pentru cazul în care tagurile au fost
+    # transformate/escape-uite în text:
+    # &lt;H2&gt;text&lt;/H2&gt;
+
+    text = re.sub(
+        r"&lt;\s*h2\b[^&]*&gt;.*?&lt;\s*/\s*h2\s*&gt;",
+        "",
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+    return text
 
 # =========================================================
 # ARTICOLE SIMPLE
@@ -1387,6 +1405,16 @@ def build_simple_html(data):
 
     continut = add_keywords_break(
         continut
+    )
+
+    # =====================================================
+    # SIGURANȚĂ FINALĂ - ELIMINARE H2
+    #
+    # DOAR PENTRU ARTICOLE SIMPLE
+    # =====================================================
+
+    continut = remove_simple_h2(
+    continut
     )
 
     # =====================================================
