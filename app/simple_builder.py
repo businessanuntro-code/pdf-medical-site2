@@ -1,277 +1,369 @@
 import re
 from html import escape
 
+
+# =========================================================
+# FUNCTII GENERALE - ARTICOLE SIMPLE
+# =========================================================
+
 def clean_text(text):
-"""Normalizeaza spatiile dintr-un text."""
-if not text:
-return ""
+    """Normalizeaza spatiile dintr-un text."""
 
-```
-text = text.replace("\xa0", " ")
-text = re.sub(r"\s+", " ", text)
+    if not text:
+        return ""
 
-return text.strip()
-```
+    text = text.replace("\xa0", " ")
+    text = re.sub(r"\s+", " ", text)
+
+    return text.strip()
+
 
 def escape_html(text):
-"""Protejeaza textul pentru HTML."""
-return escape(clean_text(text))
+    """Protejeaza textul pentru HTML."""
+
+    return escape(clean_text(text))
+
+
+# =========================================================
+# AUTORI - ARTICOLE SIMPLE
+# =========================================================
 
 def format_author_numbers(text):
-"""
-Transforma numerele asociate autorilor in superscript.
+    """
+    Transforma numerele asociate autorilor in superscript.
 
-```
-Exemple:
+    Exemple:
+
     Autor1
     Autor1,2
     Autor1,2,3
 
-Devine:
+    devin:
+
     Autor<sup>1</sup>
     Autor<sup>1,2</sup>
     Autor<sup>1,2,3</sup>
 
-Regula se aplica DOAR in zona autorilor.
-"""
-
-if not text:
-    return ""
-
-text = escape_html(text)
-
-# Grup de numere aflat imediat dupa numele autorului.
-text = re.sub(
-    r"(?<=[A-Za-zÀ-ÖØ-öø-ÿĂăÂâÎîȘșŞşȚțŢţ\-])"
-    r"(\d+(?:\s*,\s*\d+)*)",
-    lambda match: f"<sup>{match.group(1)}</sup>",
-    text
-)
-
-return text
-```
-
-def format_authors(authors):
-"""
-Afiseaza autorii cu bold si numerele asociate in superscript.
-"""
-
-```
-if not authors:
-    return ""
-
-formatted = format_author_numbers(authors)
-
-return f'<div class="simple-authors"><strong>{formatted}</strong></div>'
-```
-
-def format_affiliations(affiliations):
-"""
-Formateaza afilierile.
-
-```
-Numerotarea este pornita de la 1 pentru fiecare articol.
-
-Chiar daca XML-ul contine alte valori in Lbl,
-builderul foloseste propria numerotare consecutiva.
-"""
-
-if not affiliations:
-    return ""
-
-html = ['<div class="simple-affiliations">']
-
-for index, affiliation in enumerate(affiliations, start=1):
-
-    text = affiliation.get("text", "")
-    text = escape_html(text)
+    Regula se aplica DOAR in zona autorilor.
+    """
 
     if not text:
-        continue
+        return ""
 
-    html.append(
-        f'<div class="simple-affiliation">'
-        f'<span class="affiliation-number">{index}.</span> '
-        f'{text}'
-        f'</div>'
+    text = escape_html(text)
+
+    text = re.sub(
+        r"(?<=[A-Za-zÀ-ÖØ-öø-ÿĂăÂâÎîȘșŞşȚțŢţ\-])"
+        r"(\d+(?:\s*,\s*\d+)*)",
+        lambda match: f"<sup>{match.group(1)}</sup>",
+        text
     )
 
-html.append("</div>")
+    return text
 
-return "\n".join(html)
-```
+
+def format_authors(authors):
+    """
+    Afiseaza autorii cu bold.
+    Numerele autorilor sunt superscript.
+    """
+
+    if not authors:
+        return ""
+
+    formatted = format_author_numbers(authors)
+
+    return (
+        '<div class="simple-authors">'
+        f"<strong>{formatted}</strong>"
+        "</div>"
+    )
+
+
+# =========================================================
+# AFILIERI - ARTICOLE SIMPLE
+# =========================================================
+
+def format_affiliations(affiliations):
+    """
+    Formateaza afilierile.
+
+    Numerotarea incepe de la 1 pentru fiecare articol.
+    """
+
+    if not affiliations:
+        return ""
+
+    html = []
+
+    html.append('<div class="simple-affiliations">')
+
+    for index, affiliation in enumerate(affiliations, start=1):
+
+        if isinstance(affiliation, dict):
+            text = affiliation.get("text", "")
+        else:
+            text = affiliation
+
+        text = escape_html(text)
+
+        if not text:
+            continue
+
+        html.append(
+            '<div class="simple-affiliation">'
+            f'<span class="affiliation-number">{index}.</span> '
+            f"{text}"
+            "</div>"
+        )
+
+    html.append("</div>")
+
+    return "\n".join(html)
+
+
+# =========================================================
+# KEYWORDS - ARTICOLE SIMPLE
+# =========================================================
 
 def format_keywords(keywords):
-"""
-Formateaza Keywords.
+    """
+    Formateaza Keywords.
 
-```
-'Keywords:' este bold.
-Se adauga spatiu/br dupa zona de keywords.
-"""
+    Keywords: este bold.
+    """
 
-if not keywords:
-    return ""
+    if not keywords:
+        return ""
 
-keywords = escape_html(keywords)
+    keywords = escape_html(keywords)
 
-return (
-    '<p class="simple-keywords">'
-    '<strong>Keywords:</strong> '
-    f'{keywords}'
-    '</p>'
-    '<br>'
-)
-```
+    return (
+        '<p class="simple-keywords">'
+        "<strong>Keywords:</strong> "
+        f"{keywords}"
+        "</p>"
+        "<br>"
+    )
+
+
+# =========================================================
+# PARAGRAFE - ARTICOLE SIMPLE
+# =========================================================
 
 def format_paragraphs(paragraphs):
-"""
-Transforma paragrafele articolului in <p>.
-"""
+    """
+    Transforma paragrafele articolului in elemente <p>.
+    """
 
-```
-if not paragraphs:
-    return ""
+    if not paragraphs:
+        return ""
 
-html = []
+    html = []
 
-for paragraph in paragraphs:
+    for paragraph in paragraphs:
 
-    paragraph = clean_text(paragraph)
+        paragraph = clean_text(paragraph)
 
-    if not paragraph:
-        continue
+        if not paragraph:
+            continue
 
-    # Keywords nu trebuie sa ajunga aici.
-    if re.match(
-        r"^(?:Keywords|Cuvinte\s+cheie)\s*:",
-        paragraph,
-        flags=re.IGNORECASE
-    ):
-        continue
+        # Keywords este tratat separat.
+        if re.match(
+            r"^(?:Keywords|Cuvinte\s+cheie)\s*:",
+            paragraph,
+            flags=re.IGNORECASE
+        ):
+            continue
 
-    html.append(
-        f'<p class="simple-paragraph">{escape_html(paragraph)}</p>'
-    )
+        html.append(
+            '<p class="simple-paragraph">'
+            f"{escape_html(paragraph)}"
+            "</p>"
+        )
 
-return "\n".join(html)
-```
+    return "\n".join(html)
+
+
+# =========================================================
+# CONSTRUIRE UN ARTICOL SIMPLU
+# =========================================================
 
 def build_simple_article(article):
-"""
-Construieste HTML-ul pentru un singur articol simplu.
-"""
+    """
+    Construieste HTML-ul pentru un singur articol simplu.
+    """
 
-```
-if not article:
-    return ""
+    if not article:
+        return ""
 
-title_en = clean_text(article.get("title_en", ""))
-title_ro = clean_text(article.get("title_ro", ""))
-
-authors = article.get("authors", "")
-affiliations = article.get("affiliations", [])
-paragraphs = article.get("paragraphs", [])
-keywords = article.get("keywords", "")
-
-html = []
-
-html.append('<article class="simple-article">')
-
-# ---------------------------------------------------------
-# TITLU EN
-# ---------------------------------------------------------
-
-if title_en:
-    html.append(
-        f'<h4 class="simple-title-en">'
-        f'{escape_html(title_en)}'
-        f'</h4>'
+    title_en = clean_text(
+        article.get("title_en", "")
     )
 
-# ---------------------------------------------------------
-# TITLU RO
-# ---------------------------------------------------------
-
-if title_ro:
-    html.append(
-        f'<h4 class="simple-title-ro">'
-        f'{escape_html(title_ro)}'
-        f'</h4>'
+    title_ro = clean_text(
+        article.get("title_ro", "")
     )
 
-# ---------------------------------------------------------
-# AUTORI
-# ---------------------------------------------------------
+    authors = article.get(
+        "authors",
+        ""
+    )
 
-if authors:
-    html.append(format_authors(authors))
+    affiliations = article.get(
+        "affiliations",
+        []
+    )
 
-# ---------------------------------------------------------
-# AFILIERI
-# ---------------------------------------------------------
+    paragraphs = article.get(
+        "paragraphs",
+        []
+    )
 
-if affiliations:
-    html.append(format_affiliations(affiliations))
+    keywords = article.get(
+        "keywords",
+        ""
+    )
 
-# ---------------------------------------------------------
-# CONTINUT
-# ---------------------------------------------------------
+    html = []
 
-content_html = format_paragraphs(paragraphs)
+    html.append(
+        '<article class="simple-article">'
+    )
 
-if content_html:
-    html.append(content_html)
+    # -----------------------------------------------------
+    # TITLU ENGLEZA
+    # -----------------------------------------------------
 
-# ---------------------------------------------------------
-# KEYWORDS
-# ---------------------------------------------------------
+    if title_en:
 
-keywords_html = format_keywords(keywords)
+        html.append(
+            '<h4 class="simple-title-en">'
+            f"{escape_html(title_en)}"
+            "</h4>"
+        )
 
-if keywords_html:
-    html.append(keywords_html)
+    # -----------------------------------------------------
+    # TITLU ROMANA
+    # -----------------------------------------------------
 
-html.append("</article>")
+    if title_ro:
 
-return "\n".join(html)
-```
+        html.append(
+            '<h4 class="simple-title-ro">'
+            f"{escape_html(title_ro)}"
+            "</h4>"
+        )
+
+    # -----------------------------------------------------
+    # AUTORI
+    # -----------------------------------------------------
+
+    if authors:
+
+        html.append(
+            format_authors(authors)
+        )
+
+    # -----------------------------------------------------
+    # AFILIERI
+    # -----------------------------------------------------
+
+    if affiliations:
+
+        html.append(
+            format_affiliations(
+                affiliations
+            )
+        )
+
+    # -----------------------------------------------------
+    # CONTINUT
+    # -----------------------------------------------------
+
+    content_html = format_paragraphs(
+        paragraphs
+    )
+
+    if content_html:
+
+        html.append(
+            content_html
+        )
+
+    # -----------------------------------------------------
+    # KEYWORDS
+    # -----------------------------------------------------
+
+    keywords_html = format_keywords(
+        keywords
+    )
+
+    if keywords_html:
+
+        html.append(
+            keywords_html
+        )
+
+    html.append(
+        "</article>"
+    )
+
+    return "\n".join(html)
+
+
+# =========================================================
+# BUILDER PRINCIPAL - ARTICOLE SIMPLE
+# =========================================================
 
 def build_simple_html(data):
-"""
-Builder principal pentru articole simple.
+    """
+    Builder principal pentru articole simple.
 
-```
-NU foloseste build_html() din builder.py.
-NU foloseste functiile pentru articole stiintifice.
+    NU foloseste build_html() din builder.py.
 
-Proceseaza exclusiv datele produse de simple_parser.py.
-"""
+    NU foloseste functiile articolelor stiintifice.
 
-if not data:
-    return ""
+    Proceseaza exclusiv datele produse
+    de simple_parser.py.
+    """
 
-articles = data.get("articles", [])
+    if not data:
+        return ""
 
-if not articles:
-    # Compatibilitate cu eventuale date simple
-    # care contin un singur articol.
-    articles = [data]
+    articles = data.get(
+        "articles",
+        []
+    )
 
-html = []
+    # Compatibilitate cu un singur articol.
+    if not articles:
 
-html.append('<div class="simple-articles">')
+        articles = [
+            data
+        ]
 
-for article in articles:
+    html = []
 
-    article_html = build_simple_article(article)
+    html.append(
+        '<div class="simple-articles">'
+    )
 
-    if not article_html:
-        continue
+    for article in articles:
 
-    html.append(article_html)
+        article_html = build_simple_article(
+            article
+        )
 
-html.append("</div>")
+        if not article_html:
+            continue
 
-return "\n".join(html)
-```
+        html.append(
+            article_html
+        )
+
+    html.append(
+        "</div>"
+    )
+
+    return "\n".join(html)
