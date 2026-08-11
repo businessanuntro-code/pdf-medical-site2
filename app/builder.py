@@ -932,10 +932,33 @@ def process_simple_affiliations(text):
     ).join(processed_parts)
 
 
+
+
+
 # =========================================================
 # ARTICOLE SIMPLE
-# FORMAT CONTENT
+# ELIMINARE H2
 # =========================================================
+
+def remove_simple_h2(text):
+
+    if not text:
+        return ""
+
+    # Elimină complet orice H2 din XML.
+    # Funcționează și dacă H2 are atribute:
+    #
+    # <H2>Text</H2>
+    # <H2 id="...">Text</H2>
+    # <H2 ...>Text</H2>
+
+    return re.sub(
+        r"<H2\b[^>]*>.*?</H2\s*>",
+        "",
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
 
 
 def format_simple_content(text):
@@ -961,9 +984,7 @@ def format_simple_content(text):
     # nu va mai apărea în articolul final.
     # =====================================================
 
-    text = remove_simple_h2(
-        text
-    )
+    text = remove_simple_h2(text)
 
     # -----------------------------------------------------
     # ELIMINARE TAGURI GENERALE
