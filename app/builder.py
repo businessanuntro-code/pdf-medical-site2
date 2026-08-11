@@ -1293,6 +1293,28 @@ def add_keywords_break(text):
         flags=re.IGNORECASE | re.DOTALL
     )
 
+
+def remove_simple_h2(text):
+    """
+    Elimină toate tagurile H2 și conținutul lor
+    din articolele simple.
+    """
+
+    if not text:
+        return text
+
+    return re.sub(
+        r"<H2\b[^>]*>.*?</H2\s*>",
+        "",
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+
+def build_simple_html(data):
+
+
+
 def build_simple_html(data):
 
     # =====================================================
