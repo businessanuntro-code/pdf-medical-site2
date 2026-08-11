@@ -32,7 +32,7 @@ def linkify(text):
     text = re.sub(
         r'(https?://[^\s]+|www\.[^\s]+)',
         lambda m:
-            f'<a href="{"https://"+m.group(0) if m.group(0).startswith("www.") else m.group(0)}" target="_blank">{m.group(0)}</a>',
+            f'<a href="{"https://" + m.group(0) if m.group(0).startswith("www.") else m.group(0)}" target="_blank">{m.group(0)}</a>',
         text
     )
 
@@ -166,7 +166,7 @@ def format_content(text):
     # -----------------------------------------------------
 
     text = re.sub(
-        r"<imagine\d+[^>]*\/?>",
+        r"<imagine\d+[^>]*/?>",
         "",
         text,
         flags=re.I
@@ -706,6 +706,35 @@ Bibliografie
 
 # =========================================================
 # ARTICOLE SIMPLE
+# ELIMINARE H2
+#
+# Exemplu:
+#
+# <H2>IOB Conference abstracts</H2>
+#
+# este eliminat complet.
+#
+# IMPORTANT:
+# Această regulă este folosită DOAR în fluxul
+# articolelor simple.
+# =========================================================
+
+
+def remove_simple_h2(text):
+
+    if not text:
+        return ""
+
+    return re.sub(
+        r"<H2\b[^>]*>.*?</H2\s*>",
+        "",
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+
+# =========================================================
+# ARTICOLE SIMPLE
 # AUTORI
 #
 # Exemplu:
@@ -905,19 +934,25 @@ def format_simple_content(text):
 
     # =====================================================
     # ELIMINARE H2
-    # =====================================================
     #
     # DOAR PENTRU ARTICOLE SIMPLE.
+    #
+    # Toate blocurile:
+    #
+    # <H2>...</H2>
+    #
+    # sunt eliminate complet.
     #
     # Exemplu:
     #
     # <H2>IOB Conference abstracts</H2>
     #
-    # este eliminat complet.
-    #
+    # nu va mai apărea în articolul final.
     # =====================================================
 
-    text = remove_simple_h2(text)
+    text = remove_simple_h2(
+        text
+    )
 
     # -----------------------------------------------------
     # ELIMINARE TAGURI GENERALE
@@ -957,7 +992,7 @@ def format_simple_content(text):
     # -----------------------------------------------------
 
     text = re.sub(
-        r"<imagine\d+[^>]*\/?>",
+        r"<imagine\d+[^>]*/?>",
         "",
         text,
         flags=re.I
@@ -1051,10 +1086,14 @@ def format_simple_content(text):
 
     for line in raw_lines:
 
-        if line.startswith("__SIMPLE_AUTHORS__"):
+        if line.startswith(
+            "__SIMPLE_AUTHORS__"
+        ):
             continue
 
-        if line.startswith("__SIMPLE_AFFILIATION__"):
+        if line.startswith(
+            "__SIMPLE_AFFILIATION__"
+        ):
             continue
 
         clean_line = re.sub(
@@ -1093,11 +1132,6 @@ def format_simple_content(text):
 
     # =====================================================
     # ELIMINARE HEADERE REPETATE
-    #
-    # Păstrăm prima apariție numai dacă textul NU este
-    # identificat ca header repetat.
-    #
-    # Pentru un header repetat îl eliminăm complet.
     # =====================================================
 
     filtered_lines = []
@@ -1290,6 +1324,24 @@ def format_simple_content(text):
     )
 
 
+# =========================================================
+# =========================================================
+# ARTICOLE SIMPLE
+# KEYWORDS
+# =========================================================
+
+
+def add_keywords_break(text):
+
+    if not text:
+        return ""
+
+    return re.sub(
+        r"<p>\s*(Keywords|Cuvinte cheie)(\s*:?)\s*(.*?)</p>",
+        r"<p><strong>\1\2</strong> \3</p><br>",
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
 
 
 # =========================================================
@@ -1297,38 +1349,6 @@ def format_simple_content(text):
 # ARTICOLE SIMPLE
 # BUILD HTML
 # =========================================================
-
-def add_keywords_break(text):
-    if not text:
-        return ""
-
-    return re.sub(
-        r"<p>\s*(Keywords|Cuvinte cheie)(\s*:?)\s*(.*?)</p>",
-        r'<p><strong>\1\2</strong> \3</p><br>',
-        text,
-        flags=re.IGNORECASE | re.DOTALL
-    )
-
-
-def remove_simple_h2(text):
-    """
-    Elimină toate tagurile H2 și conținutul lor
-    din articolele simple.
-    """
-
-    if not text:
-        return text
-
-    return re.sub(
-        r"<H2\b[^>]*>.*?</H2\s*>",
-        "",
-        text,
-        flags=re.IGNORECASE | re.DOTALL
-    )
-
-
-def build_simple_html(data):
-
 
 
 def build_simple_html(data):
@@ -1347,12 +1367,8 @@ def build_simple_html(data):
     # =====================================================
 
     continut_text = data.get(
-    "continut_articol",
-    ""
-    )
-
-    continut_text = remove_simple_h2(
-    continut_text
+        "continut_articol",
+        ""
     )
 
     # =====================================================
@@ -1366,11 +1382,11 @@ def build_simple_html(data):
     # =====================================================
 
     continut = format_simple_content(
-    continut_text
+        continut_text
     )
 
     continut = add_keywords_break(
-    continut
+        continut
     )
 
     # =====================================================
@@ -1386,7 +1402,6 @@ def build_simple_html(data):
     # =====================================================
 
     return f"""
-    
 <!DOCTYPE html>
 <html lang="ro">
 
