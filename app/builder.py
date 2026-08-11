@@ -903,6 +903,22 @@ def format_simple_content(text):
     if not text:
         return ""
 
+    # =====================================================
+    # ELIMINARE H2
+    # =====================================================
+    #
+    # DOAR PENTRU ARTICOLE SIMPLE.
+    #
+    # Exemplu:
+    #
+    # <H2>IOB Conference abstracts</H2>
+    #
+    # este eliminat complet.
+    #
+    # =====================================================
+
+    text = remove_simple_h2(text)
+
     # -----------------------------------------------------
     # ELIMINARE TAGURI GENERALE
     # -----------------------------------------------------
