@@ -31,12 +31,13 @@ def title_style():
     return """
     <style>
         .simple-title-en {
-            margin-bottom: 0;
-        }
+         margin-bottom: 0;
+         }
 
         .simple-title-ro {
-            margin-top: 0;
-        }
+         margin-top: 0;
+         font-style: italic;
+         }
     </style>
     """
 
