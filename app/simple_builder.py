@@ -210,6 +210,7 @@ def format_keywords(keywords):
         '<strong>Keywords:</strong> '
         f'{keywords}'
         '</div>'
+        '<br><br>'
     )
 
 
