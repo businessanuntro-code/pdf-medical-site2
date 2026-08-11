@@ -8,16 +8,17 @@ from fastapi.staticfiles import StaticFiles
 
 # =========================================================
 
-# ARTICOLE STIINTIFICE
+# IMPORTURI - ARTICOLE STIINTIFICE
 
 # =========================================================
 
 from app.parser import parse_xml
 from app.builder import build_html
+from app.api_client import publish_article
 
 # =========================================================
 
-# ARTICOLE SIMPLE
+# IMPORTURI - ARTICOLE SIMPLE
 
 # =========================================================
 
@@ -26,11 +27,9 @@ from app.simple_builder import build_simple_html
 
 # =========================================================
 
-# API
+# CONFIGURARE APLICATIE
 
 # =========================================================
-
-from app.api_client import publish_article
 
 app = FastAPI()
 
@@ -56,7 +55,7 @@ name="static"
 
 # =========================================================
 
-# HOME PAGE
+# HOME PAGE - COMUN
 
 # =========================================================
 
@@ -72,7 +71,41 @@ return templates.TemplateResponse(
 
 # =========================================================
 
-# UPLOAD ARTICOL STIINTIFIC
+# =========================================================
+
+# ARTICOLE STIINTIFICE
+
+# =========================================================
+
+# =========================================================
+
+#
+
+# Flux:
+
+#
+
+# XML
+
+# ↓
+
+# parser.py
+
+# ↓
+
+# builder.py
+
+# ↓
+
+# publish_article()
+
+# ↓
+
+# HTML
+
+#
+
+# Aceasta zona pastreaza fluxul existent.
 
 # =========================================================
 
@@ -94,19 +127,19 @@ with open(xml_path, "wb") as f:
     f.write(content)
 
 # -----------------------------------------------------
-# 2. Parse XML
+# 2. PARSER STIINTIFIC
 # -----------------------------------------------------
 
 data = parse_xml(xml_path)
 
 # -----------------------------------------------------
-# 3. Generare HTML
+# 3. BUILDER STIINTIFIC
 # -----------------------------------------------------
 
 html = build_html(data)
 
 # -----------------------------------------------------
-# 4. Adaugare HTML in dictionarul trimis catre API
+# 4. Adaugare HTML in dictionar
 # -----------------------------------------------------
 
 data["continut_html"] = html
@@ -138,7 +171,45 @@ return RedirectResponse(
 
 # =========================================================
 
-# UPLOAD ARTICOL SIMPLU
+# =========================================================
+
+# ARTICOLE SIMPLE
+
+# =========================================================
+
+# =========================================================
+
+#
+
+# Flux:
+
+#
+
+# XML
+
+# ↓
+
+# simple_parser.py
+
+# ↓
+
+# simple_builder.py
+
+# ↓
+
+# HTML
+
+#
+
+# IMPORTANT:
+
+# Acest flux este separat de articolele stiintifice.
+
+#
+
+# Pentru moment NU trimitem articolul simplu in baza de date.
+
+# Mai intai verificam si perfectionam HTML-ul generat.
 
 # =========================================================
 
@@ -160,13 +231,13 @@ with open(xml_path, "wb") as f:
     f.write(content)
 
 # -----------------------------------------------------
-# 2. Parse XML SIMPLU
+# 2. PARSER ARTICOL SIMPLU
 # -----------------------------------------------------
 
 data = parse_simple_xml(xml_path)
 
 # -----------------------------------------------------
-# 3. Generare HTML SIMPLU
+# 3. BUILDER ARTICOL SIMPLU
 # -----------------------------------------------------
 
 html = build_simple_html(data)
@@ -178,9 +249,9 @@ html = build_simple_html(data)
 data["continut_html"] = html
 
 # -----------------------------------------------------
-# 5. Pentru moment NU publicam articolul simplu in DB.
+# 5. PUBLICARE IN DB
 #
-# Testam mai intai generarea HTML.
+# Momentan este dezactivata intentionat.
 # -----------------------------------------------------
 
 # publish_article(data)
@@ -206,9 +277,19 @@ return RedirectResponse(
 
 # =========================================================
 
-# ARTICLE PAGE
+# =========================================================
+
+# RUTE COMUNE
 
 # =========================================================
+
+# =========================================================
+
+# ---------------------------------------------------------
+
+# ARTICLE PAGE
+
+# ---------------------------------------------------------
 
 @app.get("/article/{file_id}", response_class=HTMLResponse)
 def article(file_id: str):
@@ -230,11 +311,19 @@ with open(path, "r", encoding="utf-8") as f:
     )
 ```
 
-# =========================================================
+# ---------------------------------------------------------
 
-# REGENERATE - ARTICOLE STIINTIFICE
+# REGENERATE
 
-# =========================================================
+#
+
+# IMPORTANT:
+
+# Ramane pe builderul articolelor stiintifice.
+
+# Nu modificam acest flux acum.
+
+# ---------------------------------------------------------
 
 @app.post("/regenerate")
 async def regenerate(data: dict = Body(...)):
