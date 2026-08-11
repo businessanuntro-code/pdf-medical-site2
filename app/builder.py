@@ -1,20 +1,17 @@
 # =========================================================
 # builder.py
 # =========================================================
-#
-# IMPORTANT:
-# - ARTICOLELE STIINTIFICE sunt pastrate separat.
-# - Regulile noi de mai jos se aplica DOAR articolelor simple.
-# =========================================================
 
 import re
 
 
 # =========================================================
 # =========================================================
-# ARTICOLE STIINTIFICE
-# FUNCTII GENERALE
+# ARTICOLE ȘTIINȚIFICE
+# FUNCȚII GENERALE
 # =========================================================
+# =========================================================
+
 
 def linkify(text):
 
@@ -24,8 +21,14 @@ def linkify(text):
     protected = []
 
     def protect(match):
-        protected.append(match.group(0))
-        return f"___HTML_{len(protected)-1}___"
+
+        protected.append(
+            match.group(0)
+        )
+
+        return (
+            f"___HTML_{len(protected)-1}___"
+        )
 
     text = re.sub(
         r"<[^>]+>",
@@ -41,6 +44,7 @@ def linkify(text):
     )
 
     for i, tag in enumerate(protected):
+
         text = text.replace(
             f"___HTML_{i}___",
             tag
@@ -50,9 +54,10 @@ def linkify(text):
 
 
 # =========================================================
-# ARTICOLE STIINTIFICE
-# REFERINTE IN PARANTEZE
+# REFERINȚE ÎN PARANTEZE
+# ARTICOLE ȘTIINȚIFICE
 # =========================================================
+
 
 def superscript_refs(text):
 
@@ -60,7 +65,10 @@ def superscript_refs(text):
         return ""
 
     def convert(match):
-        return f"<sup>{match.group(0)}</sup>"
+
+        return (
+            f"<sup>{match.group(0)}</sup>"
+        )
 
     return re.sub(
         r'\(\d+(?:\s*,\s*\d+)*\)',
@@ -70,9 +78,10 @@ def superscript_refs(text):
 
 
 # =========================================================
-# ARTICOLE STIINTIFICE
 # AUTORI
+# ARTICOLE ȘTIINȚIFICE
 # =========================================================
+
 
 def superscript_author_refs(text):
 
@@ -80,7 +89,8 @@ def superscript_author_refs(text):
         return ""
 
     return re.sub(
-        r'(?<=[A-Za-zĂÂÎȘȚăâîșț\-])(\d+(?:,\d+)*)',
+        r'(?<=[A-Za-zĂÂÎȘȚăâîșț\-])'
+        r'(\d+(?:,\d+)*)',
         r'<sup>\1</sup>',
         text
     )
@@ -90,6 +100,7 @@ def superscript_author_refs(text):
 # SIMBOLURI
 # =========================================================
 
+
 def superscript_symbols(text):
 
     if not text:
@@ -97,14 +108,21 @@ def superscript_symbols(text):
 
     return (
         text
-        .replace("™", "<sup>™</sup>")
-        .replace("®", "<sup>®</sup>")
+        .replace(
+            "™",
+            "<sup>™</sup>"
+        )
+        .replace(
+            "®",
+            "<sup>®</sup>"
+        )
     )
 
 
 # =========================================================
 # IMAGINI
 # =========================================================
+
 
 def render_image(url):
 
@@ -117,9 +135,11 @@ def render_image(url):
 
 # =========================================================
 # =========================================================
-# ARTICOLE STIINTIFICE
+# ARTICOLE ȘTIINȚIFICE
 # FORMAT CONTENT
 # =========================================================
+# =========================================================
+
 
 def format_content(text):
 
@@ -234,13 +254,16 @@ def format_content(text):
         )
 
         if is_lbody:
+
             line = line.replace(
                 "__LBODY__",
                 "",
                 1
             )
 
-        processed = linkify(line)
+        processed = linkify(
+            line
+        )
 
         processed = superscript_refs(
             processed
@@ -278,7 +301,7 @@ def format_content(text):
             )
 
         # -------------------------------------------------
-        # LISTA
+        # LISTĂ
         # -------------------------------------------------
 
         if is_lbody:
@@ -291,7 +314,10 @@ def format_content(text):
         # TITLU / INTERTITLU AUTOMAT
         # -------------------------------------------------
 
-        elif 1 <= words <= 8 and next_long:
+        elif (
+            1 <= words <= 8
+            and next_long
+        ):
 
             html.append(
                 f"<p><strong>{processed}</strong></p>"
@@ -307,14 +333,18 @@ def format_content(text):
                 f"<p>{processed}</p>"
             )
 
-    return "\n".join(html)
+    return "\n".join(
+        html
+    )
 
 
 # =========================================================
 # =========================================================
-# ARTICOLE STIINTIFICE
+# ARTICOLE ȘTIINȚIFICE
 # BIBLIOGRAFIE
 # =========================================================
+# =========================================================
+
 
 def format_bibliography(text):
 
@@ -338,35 +368,69 @@ def format_bibliography(text):
 
 # =========================================================
 # =========================================================
-# ARTICOLE STIINTIFICE
+# ARTICOLE ȘTIINȚIFICE
 # BUILD HTML
 # =========================================================
+# =========================================================
+
 
 def build_html(data):
 
+    # -----------------------------------------------------
+    # TITLU ROMÂNĂ
+    # -----------------------------------------------------
+
     titlu_ro = data.get(
         "titlu_ro",
-        data.get("titlu", "")
+        data.get(
+            "titlu",
+            ""
+        )
     )
+
+    # -----------------------------------------------------
+    # TITLU ENGLEZĂ
+    # -----------------------------------------------------
 
     titlu_en = data.get(
         "titlu_en",
-        data.get("english_title", "")
+        data.get(
+            "english_title",
+            ""
+        )
     )
+
+    # -----------------------------------------------------
+    # AUTORI
+    # -----------------------------------------------------
 
     autori = data.get(
         "autori",
-        data.get("autor", "")
+        data.get(
+            "autor",
+            ""
+        )
     )
+
+    # -----------------------------------------------------
+    # CONȚINUT
+    # -----------------------------------------------------
 
     continut_text = data.get(
         "continut",
-        data.get("continut_articol", "")
+        data.get(
+            "continut_articol",
+            ""
+        )
     )
 
     continut = format_content(
         continut_text
     )
+
+    # -----------------------------------------------------
+    # ABSTRACT
+    # -----------------------------------------------------
 
     abstract = superscript_symbols(
         superscript_refs(
@@ -379,16 +443,29 @@ def build_html(data):
         )
     )
 
+    # -----------------------------------------------------
+    # KEYWORDS ENGLEZĂ
+    # -----------------------------------------------------
+
     keywords = data.get(
         "keywords",
-        data.get("keywords_eng", "")
+        data.get(
+            "keywords_eng",
+            ""
+        )
     )
 
     kwe = superscript_symbols(
         superscript_refs(
-            linkify(keywords)
+            linkify(
+                keywords
+            )
         )
     )
+
+    # -----------------------------------------------------
+    # REZUMAT
+    # -----------------------------------------------------
 
     rez = superscript_symbols(
         superscript_refs(
@@ -401,55 +478,103 @@ def build_html(data):
         )
     )
 
+    # -----------------------------------------------------
+    # CUVINTE CHEIE ROMÂNĂ
+    # -----------------------------------------------------
+
     cuvinte_cheie = data.get(
         "cuvinte_cheie",
-        data.get("keywords_rom", "")
+        data.get(
+            "keywords_rom",
+            ""
+        )
     )
 
     kwr = superscript_symbols(
         superscript_refs(
-            linkify(cuvinte_cheie)
+            linkify(
+                cuvinte_cheie
+            )
         )
     )
 
+    # -----------------------------------------------------
+    # AUTOR CORESPONDENT
+    # -----------------------------------------------------
+
     autor_corespondent = data.get(
         "autor_corespondent",
-        data.get("corespondent", "")
+        data.get(
+            "corespondent",
+            ""
+        )
     )
+
+    # -----------------------------------------------------
+    # SUPORT FINANCIAR
+    # -----------------------------------------------------
 
     suport = data.get(
         "suport",
-        data.get("financial_support", "")
+        data.get(
+            "financial_support",
+            ""
+        )
     )
+
+    # -----------------------------------------------------
+    # LICENȚĂ
+    # -----------------------------------------------------
 
     licenta = data.get(
         "licenta_cc_by",
-        data.get("cc_by", "")
+        data.get(
+            "cc_by",
+            ""
+        )
     )
+
+    # -----------------------------------------------------
+    # PRIMIT
+    # -----------------------------------------------------
 
     primit = data.get(
         "primit",
         ""
     )
 
-    if primit.lower().startswith("primit:"):
+    if primit.lower().startswith(
+        "primit:"
+    ):
 
         primit = primit.split(
             ":",
             1
         )[1].strip()
 
+    # -----------------------------------------------------
+    # ACCEPTAT
+    # -----------------------------------------------------
+
     acceptat = data.get(
         "acceptat",
         ""
     )
 
-    if acceptat.lower().startswith("acceptat:"):
+    if acceptat.lower().startswith(
+        "acceptat:"
+    ):
 
         acceptat = acceptat.split(
             ":",
             1
         )[1].strip()
+
+    # =====================================================
+    # HTML ARTICOL ȘTIINȚIFIC
+    #
+    # ACEASTĂ SECȚIUNE ESTE PENTRU ARTICOLE ȘTIINȚIFICE.
+    # =====================================================
 
     return f"""<!DOCTYPE html>
 <html lang="ro">
@@ -633,33 +758,33 @@ Bibliografie
 
 </body>
 
-</html>
+</html>"""
 
 
 # =========================================================
 # =========================================================
 # ARTICOLE SIMPLE
-# REGULI SEPARATE
+# FUNCȚII SEPARATE
 # =========================================================
-#
-# Structura XML:
-#
-# H4       -> titlu / titlu secundar
-# H5       -> autori
-# LBody    -> afiliere
-# p / P    -> continut
-# P Keywords: -> cuvinte cheie
-#
-# IMPORTANT:
-# Nicio functie de mai jos nu este folosita de
-# build_html() pentru articolele stiintifice.
 # =========================================================
 
 
 # =========================================================
 # ARTICOLE SIMPLE
-# H5 = AUTORI
+# AUTORI
+#
+# Exemplu:
+#
+# Iris-Iuliana Adam1, Alina Ormenișan2
+#
+# devine:
+#
+# Iris-Iuliana Adam<sup>1</sup>,
+# Alina Ormenișan<sup>2</sup>
+#
+# Regula se aplică DOAR în H5.
 # =========================================================
+
 
 def superscript_simple_author_refs(text):
 
@@ -679,7 +804,7 @@ def superscript_simple_author_refs(text):
             f"{len(protected)-1}___"
         )
 
-    # Protejam eventualele taguri HTML.
+    # Protejăm eventualele taguri HTML
 
     text = re.sub(
         r"<[^>]+>",
@@ -687,9 +812,7 @@ def superscript_simple_author_refs(text):
         text
     )
 
-    # Autor + numar:
-    # Adam1 -> Adam<sup>1</sup>
-    # Ormenisan2 -> Ormenisan<sup>2</sup>
+    # Autor + număr
 
     text = re.sub(
         r"(?<=[A-Za-zĂÂÎȘȚăâîșț\-])"
@@ -698,7 +821,11 @@ def superscript_simple_author_refs(text):
         text
     )
 
-    for i, tag in enumerate(protected):
+    # Restaurăm tagurile
+
+    for i, tag in enumerate(
+        protected
+    ):
 
         text = text.replace(
             f"___AUTHOR_HTML_{i}___",
@@ -711,11 +838,20 @@ def superscript_simple_author_refs(text):
 # =========================================================
 # ARTICOLE SIMPLE
 # H5 = AUTORI
+#
+# Autorii:
+# - bold
+# - numere superscript
 # =========================================================
+
 
 def process_simple_h5(match):
 
-    author_text = match.group(1)
+    author_text = match.group(
+        1
+    )
+
+    # Superscript DOAR pentru autori
 
     author_text = (
         superscript_simple_author_refs(
@@ -723,11 +859,11 @@ def process_simple_h5(match):
         )
     )
 
-    # Autorii sunt bold.
+    # Bold pentru întreaga zonă
 
     author_text = (
         "<strong>"
-        + author_text.strip()
+        + author_text
         + "</strong>"
     )
 
@@ -742,21 +878,21 @@ def process_simple_h5(match):
 # =========================================================
 # ARTICOLE SIMPLE
 # AFILIERI
+#
+# Numerotarea se RESETEAZĂ la fiecare H5.
+#
+# Exemplu:
+#
+# AUTORI 1
+# 1. afiliere
+# 2. afiliere
+#
+# AUTORI 2
+# 1. afiliere
+# 2. afiliere
+# 3. afiliere
 # =========================================================
-#
-# Numerotarea:
-#
-# H5
-# LBody -> 1
-# LBody -> 2
-#
-# urmatorul H5
-# LBody -> 1
-# LBody -> 2
-# LBody -> 3
-#
-# Se reseteaza la fiecare H5.
-# =========================================================
+
 
 def process_simple_affiliations(text):
 
@@ -766,7 +902,9 @@ def process_simple_affiliations(text):
 
     processed_parts = []
 
-    for index, part in enumerate(parts):
+    for index, part in enumerate(
+        parts
+    ):
 
         if index == 0:
 
@@ -798,24 +936,11 @@ def process_simple_affiliations(text):
                 "\n"
             )
 
-        # LBody poate aparea:
-        # 1. in LI
-        # 2. singur
-        #
-        # In ambele cazuri il tratam ca afiliere.
-
         part = re.sub(
             r"<LI>\s*"
-            r"(?:<Lbl>.*?</Lbl>\s*)?"
+            r"<Lbl>.*?</Lbl>\s*"
             r"<LBody>(.*?)</LBody>\s*"
             r"</LI>",
-            replace_lbody,
-            part,
-            flags=re.I | re.S
-        )
-
-        part = re.sub(
-            r"<LBody>(.*?)</LBody>",
             replace_lbody,
             part,
             flags=re.I | re.S
@@ -827,126 +952,27 @@ def process_simple_affiliations(text):
 
     return (
         "__SIMPLE_AUTHORS__"
-    ).join(processed_parts)
-
-
-# =========================================================
-# ARTICOLE SIMPLE
-# HEADERE REPETATE DE PAGINA
-# =========================================================
-#
-# In XML-ul articolelor simple, un header de pagina este
-# de regula un paragraf (<p> / <P>) repetat identic la
-# inceputul paginilor.
-#
-# Nu eliminam automat H4:
-# H4 poate reprezenta un titlu/subtitlu legitim si poate
-# aparea de mai multe ori in articol.
-# =========================================================
-
-def remove_repeated_simple_page_headers(text):
-
-    if not text:
-        return ""
-
-    # Gasim paragrafele XML.
-    paragraphs = re.findall(
-        r"<p\b[^>]*>(.*?)</p>",
-        text,
-        flags=re.I | re.S
-    )
-
-    paragraphs_upper = re.findall(
-        r"<P\b[^>]*>(.*?)</P>",
-        text,
-        flags=re.I | re.S
-    )
-
-    all_paragraphs = paragraphs + paragraphs_upper
-
-    normalized = []
-
-    for paragraph in all_paragraphs:
-
-        clean = re.sub(
-            r"<[^>]+>",
-            " ",
-            paragraph
-        )
-
-        clean = re.sub(
-            r"\s+",
-            " ",
-            clean
-        ).strip()
-
-        if clean:
-            normalized.append(
-                clean.casefold()
-            )
-
-    counts = {}
-
-    for value in normalized:
-
-        counts[value] = (
-            counts.get(value, 0) + 1
-        )
-
-    # Consideram header doar daca este repetat si este
-    # relativ scurt. Nu eliminam paragrafe lungi.
-    repeated = {
-        value
-        for value, count in counts.items()
-        if count >= 2
-        and 1 <= len(value.split()) <= 12
-    }
-
-    if not repeated:
-        return text
-
-    def remove_paragraph(match):
-
-        content = match.group(1)
-
-        clean = re.sub(
-            r"<[^>]+>",
-            " ",
-            content
-        )
-
-        clean = re.sub(
-            r"\s+",
-            " ",
-            clean
-        ).strip()
-
-        if clean.casefold() in repeated:
-            return ""
-
-        return match.group(0)
-
-    return re.sub(
-        r"<p\b[^>]*>.*?</p>",
-        remove_paragraph,
-        text,
-        flags=re.I | re.S
+    ).join(
+        processed_parts
     )
 
 
+# =========================================================
 # =========================================================
 # ARTICOLE SIMPLE
 # FORMAT CONTENT
 # =========================================================
+# =========================================================
+
 
 def format_simple_content(text):
 
     if not text:
         return ""
 
-    # =====================================================
-    # CURĂȚARE TAGURI GENERALE
-    # =====================================================
+    # -----------------------------------------------------
+    # ELIMINARE TAGURI GENERALE
+    # -----------------------------------------------------
 
     text = re.sub(
         r"</?(ContinutArticol|continut_articol|body)[^>]*>",
@@ -955,7 +981,10 @@ def format_simple_content(text):
         flags=re.I
     )
 
-    # Eliminăm tabelele
+    # -----------------------------------------------------
+    # ELIMINARE TABELE
+    # -----------------------------------------------------
+
     text = re.sub(
         r"<table.*?</table>",
         "",
@@ -963,7 +992,10 @@ def format_simple_content(text):
         flags=re.I | re.S
     )
 
-    # Eliminăm figurile
+    # -----------------------------------------------------
+    # ELIMINARE FIGURI
+    # -----------------------------------------------------
+
     text = re.sub(
         r"<figure.*?</figure>",
         "",
@@ -971,7 +1003,10 @@ def format_simple_content(text):
         flags=re.I | re.S
     )
 
-    # Eliminăm imaginile XML
+    # -----------------------------------------------------
+    # ELIMINARE IMAGINI XML
+    # -----------------------------------------------------
+
     text = re.sub(
         r"<imagine\d+[^>]*\/?>",
         "",
@@ -985,42 +1020,11 @@ def format_simple_content(text):
     )
 
     # =====================================================
-    # H4
-    #
-    # H4 poate fi:
-    # - titlu secundar
-    # - titlu în limba română
-    #
-    # Îl păstrăm ca header.
-    # =====================================================
-
-    text = re.sub(
-        r"<H4>\s*(.*?)\s*</H4>",
-        r"\n__SIMPLE_H4__\1__END_SIMPLE_H4__\n",
-        text,
-        flags=re.I | re.S
-    )
-
-    # =====================================================
     # H5 = AUTORI
-    #
-    # - bold
-    # - numere superscript
-    #
-    # Exemplu:
-    #
-    # Iris-Iuliana Adam1, Alina Ormenișan2
-    #
-    # devine:
-    #
-    # <strong>
-    # Iris-Iuliana Adam<sup>1</sup>,
-    # Alina Ormenișan<sup>2</sup>
-    # </strong>
     # =====================================================
 
     text = re.sub(
-        r"<H5>\s*(.*?)\s*</H5>",
+        r"<H5>(.*?)</H5>",
         process_simple_h5,
         text,
         flags=re.I | re.S
@@ -1029,31 +1033,30 @@ def format_simple_content(text):
     # =====================================================
     # AFILIERI
     #
-    # Fiecare grup după H5 începe numerotarea de la 1.
-    #
-    # Exemplu:
-    #
-    # H5 AUTORI A
-    # LBody afiliere A1
-    # LBody afiliere A2
-    #
-    # H5 AUTORI B
-    # LBody afiliere B1
-    # LBody afiliere B2
-    # LBody afiliere B3
-    #
-    # devine:
-    #
-    # 1. afiliere A1
-    # 2. afiliere A2
-    #
-    # 1. afiliere B1
-    # 2. afiliere B2
-    # 3. afiliere B3
+    # Numerotarea se resetează la fiecare H5.
     # =====================================================
 
     text = process_simple_affiliations(
         text
+    )
+
+    # =====================================================
+    # H4
+    #
+    # În articole simple:
+    #
+    # H4 poate reprezenta:
+    # - titlu principal
+    # - titlu secundar
+    #
+    # Le afișăm cu bold.
+    # =====================================================
+
+    text = re.sub(
+        r"<H4>(.*?)</H4>",
+        r"\n__SIMPLE_H4__\1\n",
+        text,
+        flags=re.I | re.S
     )
 
     # =====================================================
@@ -1090,17 +1093,15 @@ def format_simple_content(text):
     )
 
     # =====================================================
-    # HEADERE REPETATE DE PAGINĂ
+    # IDENTIFICARE HEADERE REPETATE DE PAGINĂ
     #
-    # În articolele simple, același paragraf scurt poate
-    # apărea din nou la începutul fiecărei pagini.
+    # DOAR PENTRU ARTICOLE SIMPLE.
     #
-    # Dacă aceeași frază apare de cel puțin 2 ori și are
-    # maximum 12 cuvinte, o considerăm header de pagină.
+    # Dacă același paragraf scurt apare de cel puțin
+    # două ori, îl considerăm header de pagină.
     #
     # IMPORTANT:
-    # Markerii pentru H4, H5 și LBody NU sunt analizați
-    # ca headere.
+    # Markerii pentru H4, H5 și afilieri sunt excluși.
     # =====================================================
 
     raw_lines = [
@@ -1140,9 +1141,14 @@ def format_simple_content(text):
         words = clean_line.split()
 
         if 1 <= len(words) <= 12:
+
             candidate_lines.append(
                 clean_line
             )
+
+    # =====================================================
+    # NUMĂR APARIȚII
+    # =====================================================
 
     from collections import Counter
 
@@ -1164,40 +1170,40 @@ def format_simple_content(text):
 
     for line in raw_lines:
 
-        # -------------------------------------------------
-        # AUTORI
-        # -------------------------------------------------
+        # Autorii trebuie păstrați.
 
         if line.startswith(
             "__SIMPLE_AUTHORS__"
         ):
+
             filtered_lines.append(
                 line
             )
+
             continue
 
-        # -------------------------------------------------
-        # AFILIERI
-        # -------------------------------------------------
+        # Afilierile trebuie păstrate.
 
         if line.startswith(
             "__SIMPLE_AFFILIATION__"
         ):
+
             filtered_lines.append(
                 line
             )
+
             continue
 
-        # -------------------------------------------------
-        # H4
-        # -------------------------------------------------
+        # H4 trebuie păstrate.
 
         if line.startswith(
             "__SIMPLE_H4__"
         ):
+
             filtered_lines.append(
                 line
             )
+
             continue
 
         clean_line = re.sub(
@@ -1206,8 +1212,8 @@ def format_simple_content(text):
             line
         ).strip()
 
-        # Eliminăm headerul repetat
         if clean_line in repeated_headers:
+
             continue
 
         filtered_lines.append(
@@ -1222,43 +1228,41 @@ def format_simple_content(text):
 
     html = []
 
-    for i, line in enumerate(lines):
+    for i, line in enumerate(
+        lines
+    ):
 
-        # =================================================
+        # -------------------------------------------------
         # H4
-        # =================================================
+        # -------------------------------------------------
 
-        h4_match = re.match(
-            r"__SIMPLE_H4__(.*?)__END_SIMPLE_H4__$",
-            line,
-            flags=re.I | re.S
-        )
+        if line.startswith(
+            "__SIMPLE_H4__"
+        ):
 
-        if h4_match:
-
-            h4_text = h4_match.group(
+            h4_text = line.replace(
+                "__SIMPLE_H4__",
+                "",
                 1
             ).strip()
 
-            if h4_text:
+            h4_text = linkify(
+                h4_text
+            )
 
-                processed = linkify(
-                    h4_text
-                )
+            h4_text = superscript_symbols(
+                h4_text
+            )
 
-                processed = superscript_symbols(
-                    processed
-                )
-
-                html.append(
-                    f"<p><strong>{processed}</strong></p>"
-                )
+            html.append(
+                f"<p><strong>{h4_text}</strong></p>"
+            )
 
             continue
 
-        # =================================================
+        # -------------------------------------------------
         # AUTORI
-        # =================================================
+        # -------------------------------------------------
 
         if line.startswith(
             "__SIMPLE_AUTHORS__"
@@ -1270,17 +1274,15 @@ def format_simple_content(text):
                 1
             ).strip()
 
-            if author_html:
-
-                html.append(
-                    f"<p>{author_html}</p>"
-                )
+            html.append(
+                f"<p>{author_html}</p>"
+            )
 
             continue
 
-        # =================================================
+        # -------------------------------------------------
         # AFILIERE
-        # =================================================
+        # -------------------------------------------------
 
         affiliation_match = re.match(
             r"__SIMPLE_AFFILIATION__"
@@ -1299,8 +1301,9 @@ def format_simple_content(text):
             )
 
             affiliation_text = (
-                affiliation_match.group(2)
-                .strip()
+                affiliation_match.group(
+                    2
+                )
             )
 
             affiliation_text = linkify(
@@ -1319,128 +1322,181 @@ def format_simple_content(text):
 
             continue
 
-        # =================================================
+        # -------------------------------------------------
         # LINKURI
-        # =================================================
+        # -------------------------------------------------
 
         processed = linkify(
             line
         )
 
-        # =================================================
+        # -------------------------------------------------
         # SIMBOLURI
         #
-        # NU aplicăm superscript pentru numere aici.
-        #
-        # Superscript pentru numere este permis DOAR
-        # în zona H5 / autori.
-        # =================================================
+        # NU aplicăm superscript pentru numere.
+        # Regula numerelor există DOAR în H5.
+        # -------------------------------------------------
 
         processed = superscript_symbols(
             processed
         )
 
-        # =================================================
+        # -------------------------------------------------
         # KEYWORDS
         #
-        # Tratăm direct aici:
+        # Doar pentru articole simple.
         #
         # Keywords:
         # Cuvinte cheie:
         #
-        # ca să fie:
-        #
-        # <strong>Keywords:</strong>
-        #
-        # și să existe spațiu după rubrică.
-        # =================================================
+        # devin bold.
+        # -------------------------------------------------
 
-        keywords_match = re.match(
-            r"^\s*"
-            r"(Keywords|Cuvinte\s+cheie)"
-            r"\s*:?"
-            r"\s*(.*)$",
+        processed = re.sub(
+            r"^(Keywords|Cuvinte cheie)(\s*:?)",
+            r"<strong>\1\2</strong>",
             processed,
-            flags=re.I | re.S
+            flags=re.I
         )
 
-        if keywords_match:
+        # -------------------------------------------------
+        # <BR> DUPĂ KEYWORDS
+        #
+        # Dacă linia începe cu Keywords sau Cuvinte cheie,
+        # adăugăm un <br> la final.
+        # -------------------------------------------------
 
-            label = keywords_match.group(
-                1
-            )
+        is_keywords = re.match(
+            r"^(?:Keywords|Cuvinte cheie)\s*:?",
+            re.sub(
+                r"<[^>]+>",
+                "",
+                processed
+            ),
+            flags=re.I
+        )
 
-            rest = keywords_match.group(
-                2
-            ).strip()
-
-            label = (
-                "Keywords"
-                if label.lower() == "keywords"
-                else "Cuvinte cheie"
-            )
-
-            if rest:
-
-                html.append(
-                    f'<p>'
-                    f'<strong>{label}:</strong> '
-                    f'{rest}'
-                    f'</p>'
-                    f'<br>'
-                )
-
-            else:
-
-                html.append(
-                    f'<p>'
-                    f'<strong>{label}:</strong>'
-                    f'</p>'
-                    f'<br>'
-                )
-
-            continue
-
-        # =================================================
+        # -------------------------------------------------
         # TEXT CURAT
-        # =================================================
+        # -------------------------------------------------
 
         clean = re.sub(
             r"<[^>]+>",
             "",
             processed
-        ).strip()
+        )
 
-        if not clean:
+        words = len(
+            clean.split()
+        )
+
+        # -------------------------------------------------
+        # URMĂTORUL RÂND
+        # -------------------------------------------------
+
+        next_long = False
+
+        if i + 1 < len(lines):
+
+            next_clean = re.sub(
+                r"<[^>]+>",
+                "",
+                lines[i + 1]
+            )
+
+            next_clean = next_clean.replace(
+                "__SIMPLE_AUTHORS__",
+                ""
+            )
+
+            next_clean = next_clean.replace(
+                "__SIMPLE_H4__",
+                ""
+            )
+
+            next_long = (
+                len(
+                    next_clean.split()
+                ) > 8
+            )
+
+        # -------------------------------------------------
+        # KEYWORDS
+        # -------------------------------------------------
+
+        if is_keywords:
+
+            html.append(
+                f"<p>{processed}</p><br>"
+            )
+
             continue
 
-        # =================================================
-        # PARAGRAF NORMAL
-        #
-        # Nu mai aplicăm automat regula:
-        # "1-8 cuvinte + următorul paragraf lung = bold"
-        #
-        # Pentru articolele simple avem deja H4,
-        # H5 și Intertitlu pentru structură.
-        # =================================================
+        # -------------------------------------------------
+        # TITLU / INTERTITLU AUTOMAT
+        # -------------------------------------------------
 
-        html.append(
-            f"<p>{processed}</p>"
-        )
+        if (
+            1 <= words <= 8
+            and next_long
+        ):
+
+            html.append(
+                f"<p><strong>{processed}</strong></p>"
+            )
+
+        # -------------------------------------------------
+        # PARAGRAF NORMAL
+        # -------------------------------------------------
+
+        else:
+
+            html.append(
+                f"<p>{processed}</p>"
+            )
 
     return "\n".join(
         html
     )
 
+
+# =========================================================
+# =========================================================
+# ARTICOLE SIMPLE
+# KEYWORDS
+# =========================================================
+# =========================================================
+
+
+def add_keywords_break(text):
+
+    if not text:
+        return ""
+
+    return re.sub(
+        r"<p>\s*"
+        r"(Keywords|Cuvinte cheie)"
+        r"(\s*:?)\s*"
+        r"(.*?)"
+        r"</p>",
+        r'<p><strong>\1\2</strong> \3</p><br>',
+        text,
+        flags=re.IGNORECASE | re.DOTALL
+    )
+
+
+# =========================================================
 # =========================================================
 # ARTICOLE SIMPLE
 # BUILD HTML
 # =========================================================
+# =========================================================
+
 
 def build_simple_html(data):
 
     # =====================================================
-    # TITLU PRINCIPAL
+    # TITLU
     # =====================================================
 
     titlu = data.get(
@@ -1449,7 +1505,7 @@ def build_simple_html(data):
     ).strip()
 
     # =====================================================
-    # CONTINUT
+    # CONȚINUT
     # =====================================================
 
     continut_text = data.get(
@@ -1457,16 +1513,36 @@ def build_simple_html(data):
         ""
     )
 
+    # =====================================================
+    # FORMAT CONȚINUT SIMPLU
+    #
+    # NU folosim build_html()
+    #
+    # NU folosim superscript_author_refs()
+    #
+    # Articolul simplu are reguli proprii.
+    # =====================================================
+
     continut = format_simple_content(
         continut_text
     )
 
     # =====================================================
-    # TITLU HTML
+    # KEYWORDS
+    # =====================================================
+
+    continut = add_keywords_break(
+        continut
+    )
+
+    # =====================================================
+    # TITLU
     # =====================================================
 
     titlu_html = superscript_symbols(
-        linkify(titlu)
+        linkify(
+            titlu
+        )
     )
 
     # =====================================================
@@ -1475,6 +1551,7 @@ def build_simple_html(data):
 
     return f"""
 <!DOCTYPE html>
+
 <html lang="ro">
 
 <head>
@@ -1503,35 +1580,33 @@ def build_simple_html(data):
         }}
 
         h1 {{
+
             font-size: 28px;
 
             line-height: 1.3;
 
             margin-bottom: 30px;
-        }}
 
-        h2 {{
-            font-size: 21px;
-
-            line-height: 1.4;
-
-            margin-top: 28px;
-
-            margin-bottom: 12px;
         }}
 
         p {{
+
             margin-bottom: 15px;
+
         }}
 
         a {{
+
             color: #0066cc;
+
         }}
 
         sup {{
+
             font-size: 0.75em;
 
             vertical-align: super;
+
         }}
 
     </style>
