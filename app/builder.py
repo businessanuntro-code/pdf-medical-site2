@@ -725,25 +725,18 @@ def remove_simple_h2(text):
     if not text:
         return ""
 
-    # Elimină blocuri H2 HTML/XML:
-    # <H2>text</H2>
-    # <h2>text</h2>
-    # <H2 class="x">text</H2>
-    # inclusiv dacă există spații/newline-uri.
+    # Elimină orice bloc H2 din XML/HTML.
+    #
+    # Exemple:
+    # <H2>IOB Conference abstracts</H2>
+    # <h2>IOB Conference abstracts</h2>
+    # <H2 class="xxx">IOB Conference abstracts</H2>
+    #
+    # Funcționează și dacă textul dintre taguri
+    # conține newline-uri.
 
     text = re.sub(
         r"<\s*h2\b[^>]*>.*?<\s*/\s*h2\s*>",
-        "",
-        text,
-        flags=re.IGNORECASE | re.DOTALL
-    )
-
-    # Siguranță pentru cazul în care tagurile au fost
-    # transformate/escape-uite în text:
-    # &lt;H2&gt;text&lt;/H2&gt;
-
-    text = re.sub(
-        r"&lt;\s*h2\b[^&]*&gt;.*?&lt;\s*/\s*h2\s*&gt;",
         "",
         text,
         flags=re.IGNORECASE | re.DOTALL
