@@ -10,10 +10,20 @@ from app.parser import parse_xml
 from app.builder import build_html
 from app.api_client import publish_article
 
+# =========================================================
+# ARTICOLE SIMPLE
+# =========================================================
+from app.simple_main import router as simple_router
+
 from fastapi import Body
 from fastapi.responses import JSONResponse
 
 app = FastAPI()
+# =========================================================
+# ROUTER - ARTICOLE SIMPLE
+# =========================================================
+
+app.include_router(simple_router)
 
 templates = Jinja2Templates(directory="templates")
 
