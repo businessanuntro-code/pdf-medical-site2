@@ -1,4 +1,4 @@
-
+```python
 import re
 from html import escape
 
@@ -25,9 +25,9 @@ def escape_html(text):
     return escape(clean_text(text))
 
 
-def title_style():
+def simple_styles():
     """
-    Stilurile folosite exclusiv pentru articolele simple.
+    Stiluri folosite EXCLUSIV pentru articolele simple.
     """
 
     return """
@@ -44,8 +44,25 @@ def title_style():
             font-style: italic;
         }
 
+        .simple-authors {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        .simple-affiliations {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
         .simple-affiliation {
             font-style: italic;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        .simple-paragraph {
+            margin-top: 0;
+            margin-bottom: 1em;
         }
 
         .simple-keywords {
@@ -180,9 +197,8 @@ def format_keywords(keywords):
 
     Keywords: este bold.
 
-    Se foloseste <div> in loc de <p>
-    pentru a evita marginile implicite ale paragrafelor
-    si pentru a elimina spatiul vertical nedorit.
+    NU folosim <p> si NU folosim <br>,
+    pentru a evita spatiul vertical suplimentar.
     """
 
     if not keywords:
@@ -286,12 +302,16 @@ def build_simple_article(article):
 
     html = []
 
+    # -----------------------------------------------------
+    # CSS - ARTICOLE SIMPLE
+    # -----------------------------------------------------
+
     html.append(
-        '<article class="simple-article">'
+        simple_styles()
     )
 
     html.append(
-        title_style()
+        '<article class="simple-article">'
     )
 
     # -----------------------------------------------------
@@ -370,6 +390,10 @@ def build_simple_article(article):
             keywords_html
         )
 
+    # -----------------------------------------------------
+    # FINAL ARTICOL
+    # -----------------------------------------------------
+
     html.append(
         "</article>"
     )
@@ -435,4 +459,4 @@ def build_simple_html(data):
     )
 
     return "\n".join(html)
-
+```
