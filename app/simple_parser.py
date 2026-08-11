@@ -1,6 +1,11 @@
+```python
 import re
 import xml.etree.ElementTree as ET
 
+
+# =========================================================
+# UTILITARE GENERALE
+# =========================================================
 
 def clean_text(text):
     """
@@ -27,32 +32,45 @@ def element_text(element):
         return ""
 
     text = "".join(element.itertext())
+
     return clean_text(text)
 
 
-def get_direct_children(element, tag_name):
+def tag_name(element):
+    """
+    Returneaza numele tagului fara namespace.
+    """
+    return element.tag.split("}")[-1]
+
+
+def get_direct_children(element, tag_name_value):
     """
     Returneaza copiii directi cu tag-ul specificat.
     """
     return [
         child
         for child in list(element)
-        if child.tag.split("}")[-1] == tag_name
+        if tag_name(child) == tag_name_value
     ]
 
 
-def get_all_children(element, tag_name):
+def get_all_children(element, tag_name_value):
     """
     Returneaza toate elementele descendente cu tag-ul specificat.
     """
     result = []
 
     for child in element.iter():
-        if child.tag.split("}")[-1] == tag_name:
+
+        if tag_name(child) == tag_name_value:
             result.append(child)
 
     return result
 
+
+# =========================================================
+# AUTORI
+# =========================================================
 
 def extract_authors(element):
     """
@@ -62,21 +80,26 @@ def extract_authors(element):
         Ancuța-Elena Baciu1, Irina-Maria Dumitru1,2
 
     Numerele raman in text pentru moment.
-    Formatarea superscript/bold va fi facuta in simple_builder.py.
+    Formatarea superscript/bold va fi facuta
+    in simple_builder.py.
     """
 
-    h5 = None
-
     for child in element.iter():
-        if child.tag.split("}")[-1] == "H5":
-            text = element_text(child)
 
-            if text:
-                h5 = text
-                break
+        if tag_name(child) != "H5":
+            continue
 
-    return h5 or ""
+        text = element_text(child)
 
+        if text:
+            return text
+
+    return ""
+
+
+# =========================================================
+# AFILIERI
+# =========================================================
 
 def extract_affiliations(element):
     """
@@ -91,7 +114,7 @@ def extract_affiliations(element):
         </LI>
     </L>
 
-    Returneaza o lista de dictionare:
+    Returneaza:
     [
         {
             "number": "1",
@@ -104,12 +127,12 @@ def extract_affiliations(element):
 
     for list_element in element.iter():
 
-        if list_element.tag.split("}")[-1] != "L":
+        if tag_name(list_element) != "L":
             continue
 
         for li in list_element:
 
-            if li.tag.split("}")[-1] != "LI":
+            if tag_name(li) != "LI":
                 continue
 
             number = ""
@@ -117,19 +140,19 @@ def extract_affiliations(element):
 
             for child in li:
 
-                tag = child.tag.split("}")[-1]
+                child_tag = tag_name(child)
 
-                if tag == "Lbl":
+                if child_tag == "Lbl":
                     number = element_text(child)
 
-                elif tag == "LBody":
+                elif child_tag == "LBody":
                     body = element_text(child)
 
             number = re.sub(r"[^\d]", "", number)
-
             body = clean_text(body)
 
             if body:
+
                 affiliations.append({
                     "number": number,
                     "text": body
@@ -137,6 +160,10 @@ def extract_affiliations(element):
 
     return affiliations
 
+
+# =========================================================
+# KEYWORDS
+# =========================================================
 
 def is_keywords(text):
     """
@@ -176,6 +203,10 @@ def extract_keywords(text):
     return clean_text(text)
 
 
+# =========================================================
+# PARAGRAFE
+# =========================================================
+
 def extract_paragraphs(element):
     """
     Extrage paragrafele P din articol.
@@ -188,7 +219,7 @@ def extract_paragraphs(element):
 
     for p in element.iter():
 
-        if p.tag.split("}")[-1] != "P":
+        if tag_name(p) != "P":
             continue
 
         text = element_text(p)
@@ -197,12 +228,19 @@ def extract_paragraphs(element):
             continue
 
         if is_keywords(text):
+
             keywords = extract_keywords(text)
+
         else:
+
             paragraphs.append(text)
 
     return paragraphs, keywords
 
+
+# =========================================================
+# TITLURI
+# =========================================================
 
 def extract_titles(element):
     """
@@ -214,13 +252,17 @@ def extract_titles(element):
 
     Daca exista un singur H4:
         acesta este folosit ca titlu.
+
+    IMPORTANT:
+    Nu mai luam H4 din sectiuni copil
+    care reprezinta de fapt acelasi articol.
     """
 
     titles = []
 
     for child in element.iter():
 
-        if child.tag.split("}")[-1] != "H4":
+        if tag_name(child) != "H4":
             continue
 
         text = element_text(child)
@@ -244,42 +286,81 @@ def extract_titles(element):
     }
 
 
+# =========================================================
+# IDENTIFICARE ARTICOLE
+# =========================================================
+
+def is_article_section(section):
+    """
+    Verifica daca un Sect reprezinta efectiv inceputul
+    unui articol.
+
+    Un articol trebuie sa aiba un H4 DIRECT.
+
+    Aceasta este diferenta importanta fata de versiunea
+    anterioara.
+
+    Nu mai consideram articol orice Sect care are un H4
+    undeva in interiorul sau.
+    """
+
+    direct_h4s = get_direct_children(section, "H4")
+
+    return len(direct_h4s) > 0
+
+
 def find_article_sections(part):
     """
-    Identifica sectiunile care contin articole.
+    Identifica sectiunile care reprezinta articole.
 
-    Un articol simplu este identificat prin prezenta unui H4.
+    IMPORTANT:
 
-    Nu presupunem ca fiecare Sect are exact aceeasi structura.
+    XML-ul are Sect-uri imbricate:
+
+        Sect
+          H4
+          Sect
+            H4
+            Sect
+              H5
+              P
+              P
+
+    Versiunea veche folosea:
+
+        get_all_children(sect, "H4")
+
+    Astfel, acelasi articol era identificat de mai multe
+    ori.
+
+    Acum verificam DOAR H4 DIRECT in Sect.
+
+    Astfel:
+
+        Sect cu H4 direct = articol
+
+        Sect fara H4 direct = continut al articolului,
+        nu articol nou.
     """
 
     articles = []
 
     for sect in part.iter():
 
-        if sect.tag.split("}")[-1] != "Sect":
+        if tag_name(sect) != "Sect":
             continue
 
-        h4s = get_all_children(sect, "H4")
-
-        if not h4s:
-            continue
-
-        titles = []
-
-        for h4 in h4s:
-            text = element_text(h4)
-
-            if text:
-                titles.append(text)
-
-        if not titles:
+        if not is_article_section(sect):
             continue
 
         articles.append(sect)
 
     return articles
 
+
+# =========================================================
+# PROCESARE ARTICOL
+# =========================================================
 
 def parse_article_section(section):
     """
@@ -313,6 +394,10 @@ def parse_article_section(section):
     }
 
 
+# =========================================================
+# PARSER PRINCIPAL - ARTICOLE SIMPLE
+# =========================================================
+
 def parse_simple_xml(xml_path):
     """
     Parser principal pentru articole simple.
@@ -323,23 +408,25 @@ def parse_simple_xml(xml_path):
     """
 
     try:
+
         tree = ET.parse(xml_path)
         root = tree.getroot()
 
     except ET.ParseError as exc:
+
         raise ValueError(
             f"XML invalid sau imposibil de procesat: {exc}"
         ) from exc
 
-    # ---------------------------------------------------------
-    # Gasim toate Part-urile
-    # ---------------------------------------------------------
+    # -----------------------------------------------------
+    # GASIM TOATE PART-URILE
+    # -----------------------------------------------------
 
     parts = []
 
     for element in root.iter():
 
-        if element.tag.split("}")[-1] == "Part":
+        if tag_name(element) == "Part":
             parts.append(element)
 
     # Daca XML-ul nu are Part, folosim root-ul.
@@ -348,31 +435,48 @@ def parse_simple_xml(xml_path):
 
     articles = []
 
-    # ---------------------------------------------------------
-    # Procesam fiecare Part
-    # ---------------------------------------------------------
+    # -----------------------------------------------------
+    # PROCESAM FIECARE PART
+    # -----------------------------------------------------
 
     for part in parts:
 
-        # H2 poate reprezenta titlul sectiunii/conferintei
+        # -------------------------------------------------
+        # TITLUL SECTIUNII / CONFERINTEI
+        # -------------------------------------------------
+
         section_title = ""
 
-        for child in part.iter():
+        for child in part:
 
-            if child.tag.split("}")[-1] == "H2":
-                text = element_text(child)
+            if tag_name(child) != "H2":
+                continue
 
-                if text:
-                    section_title = text
-                    break
+            text = element_text(child)
+
+            if text:
+
+                section_title = text
+                break
+
+        # -------------------------------------------------
+        # GASIM ARTICOLELE
+        # -------------------------------------------------
 
         article_sections = find_article_sections(part)
+
+        # -------------------------------------------------
+        # PROCESAM FIECARE ARTICOL O SINGURA DATA
+        # -------------------------------------------------
 
         for section in article_sections:
 
             article = parse_article_section(section)
 
-            # Ignoram sectiunile fara continut real
+            # ---------------------------------------------
+            # IGNORAM SECTIUNILE FARA CONTINUT REAL
+            # ---------------------------------------------
+
             if not (
                 article["title_en"]
                 or article["title_ro"]
@@ -385,9 +489,9 @@ def parse_simple_xml(xml_path):
 
             articles.append(article)
 
-    # ---------------------------------------------------------
-    # Rezultatul final
-    # ---------------------------------------------------------
+    # -----------------------------------------------------
+    # REZULTAT FINAL
+    # -----------------------------------------------------
 
     return {
         "type": "simple",
@@ -395,16 +499,48 @@ def parse_simple_xml(xml_path):
         "articles": articles,
 
         # Pentru compatibilitate cu fluxul existent
-        # putem folosi primul articol ca articol principal.
-        "title_en": articles[0]["title_en"] if articles else "",
-        "title_ro": articles[0]["title_ro"] if articles else "",
-        "authors": articles[0]["authors"] if articles else "",
-        "affiliations": articles[0]["affiliations"] if articles else [],
-        "keywords": articles[0]["keywords"] if articles else "",
-        "content": articles[0]["content"] if articles else [],
+        # folosim primul articol ca articol principal.
+
+        "title_en": (
+            articles[0]["title_en"]
+            if articles
+            else ""
+        ),
+
+        "title_ro": (
+            articles[0]["title_ro"]
+            if articles
+            else ""
+        ),
+
+        "authors": (
+            articles[0]["authors"]
+            if articles
+            else ""
+        ),
+
+        "affiliations": (
+            articles[0]["affiliations"]
+            if articles
+            else []
+        ),
+
+        "keywords": (
+            articles[0]["keywords"]
+            if articles
+            else ""
+        ),
+
+        "content": (
+            articles[0]["content"]
+            if articles
+            else []
+        ),
+
         "content_text": (
             articles[0]["content_text"]
             if articles
             else ""
         )
     }
+```
