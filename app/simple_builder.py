@@ -1,3 +1,4 @@
+```python
 import re
 from html import escape
 
@@ -26,29 +27,37 @@ def escape_html(text):
 
 def title_style():
     """
-    Elimina spatiul vertical dintre cele doua titluri.
+    Stilurile folosite exclusiv pentru articolele simple.
     """
+
     return """
     <style>
+
         .simple-title-en {
-         margin-bottom: 0;
-         }
+            margin-top: 0;
+            margin-bottom: 0;
+        }
 
         .simple-title-ro {
-         margin-top: 0;
-         font-style: italic;
-         }
+            margin-top: 0;
+            margin-bottom: 0;
+            font-style: italic;
+        }
 
-         .simple-affiliation {
-         font-style: italic;
-         }
+        .simple-affiliation {
+            font-style: italic;
+        }
 
-         .simple-keywords {
-          margin-top: 0;
-          margin-bottom: 0;
-         }
+        .simple-keywords {
+            margin-top: 0;
+            margin-bottom: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
     </style>
     """
+
 
 # =========================================================
 # AUTORI - ARTICOLE SIMPLE
@@ -115,6 +124,7 @@ def format_affiliations(affiliations):
     Formateaza afilierile.
 
     Numerotarea incepe de la 1 pentru fiecare articol.
+    Afilierile sunt afisate italic.
     """
 
     if not affiliations:
@@ -122,12 +132,20 @@ def format_affiliations(affiliations):
 
     html = []
 
-    html.append('<div class="simple-affiliations">')
+    html.append(
+        '<div class="simple-affiliations">'
+    )
 
-    for index, affiliation in enumerate(affiliations, start=1):
+    for index, affiliation in enumerate(
+        affiliations,
+        start=1
+    ):
 
         if isinstance(affiliation, dict):
-            text = affiliation.get("text", "")
+            text = affiliation.get(
+                "text",
+                ""
+            )
         else:
             text = affiliation
 
@@ -138,12 +156,16 @@ def format_affiliations(affiliations):
 
         html.append(
             '<div class="simple-affiliation">'
-            f'<span class="affiliation-number">{index}.</span> '
+            f'<span class="affiliation-number">'
+            f'{index}.'
+            f'</span> '
             f"{text}"
             "</div>"
         )
 
-    html.append("</div>")
+    html.append(
+        "</div>"
+    )
 
     return "\n".join(html)
 
@@ -155,6 +177,12 @@ def format_affiliations(affiliations):
 def format_keywords(keywords):
     """
     Formateaza Keywords.
+
+    Keywords: este bold.
+
+    Se foloseste <div> in loc de <p>
+    pentru a evita marginile implicite ale paragrafelor
+    si pentru a elimina spatiul vertical nedorit.
     """
 
     if not keywords:
@@ -163,10 +191,10 @@ def format_keywords(keywords):
     keywords = escape_html(keywords)
 
     return (
-        '<p class="simple-keywords">'
+        '<div class="simple-keywords">'
         '<strong>Keywords:</strong> '
         f'{keywords}'
-        '</p>'
+        '</div>'
     )
 
 
@@ -186,7 +214,9 @@ def format_paragraphs(paragraphs):
 
     for paragraph in paragraphs:
 
-        paragraph = clean_text(paragraph)
+        paragraph = clean_text(
+            paragraph
+        )
 
         if not paragraph:
             continue
@@ -221,11 +251,17 @@ def build_simple_article(article):
         return ""
 
     title_en = clean_text(
-        article.get("title_en", "")
+        article.get(
+            "title_en",
+            ""
+        )
     )
 
     title_ro = clean_text(
-        article.get("title_ro", "")
+        article.get(
+            "title_ro",
+            ""
+        )
     )
 
     authors = article.get(
@@ -254,7 +290,9 @@ def build_simple_article(article):
         '<article class="simple-article">'
     )
 
-    html.append(title_style())
+    html.append(
+        title_style()
+    )
 
     # -----------------------------------------------------
     # TITLU ENGLEZA
@@ -287,7 +325,9 @@ def build_simple_article(article):
     if authors:
 
         html.append(
-            format_authors(authors)
+            format_authors(
+                authors
+            )
         )
 
     # -----------------------------------------------------
@@ -361,7 +401,10 @@ def build_simple_html(data):
         []
     )
 
-    # Compatibilitate cu un singur articol.
+    # -----------------------------------------------------
+    # COMPATIBILITATE CU UN SINGUR ARTICOL
+    # -----------------------------------------------------
+
     if not articles:
 
         articles = [
@@ -392,3 +435,4 @@ def build_simple_html(data):
     )
 
     return "\n".join(html)
+```
