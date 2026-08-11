@@ -1,4 +1,4 @@
-```python
+
 import re
 from html import escape
 
@@ -435,4 +435,4 @@ def build_simple_html(data):
     )
 
     return "\n".join(html)
-```
+
