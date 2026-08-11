@@ -1331,8 +1331,12 @@ def build_simple_html(data):
     # =====================================================
 
     continut_text = data.get(
-        "continut_articol",
-        ""
+    "continut_articol",
+    ""
+    )
+
+    continut_text = remove_simple_h2(
+    continut_text
     )
 
     # =====================================================
