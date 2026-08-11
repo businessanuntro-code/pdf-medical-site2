@@ -24,6 +24,22 @@ def escape_html(text):
     return escape(clean_text(text))
 
 
+def title_style():
+    """
+    Elimina spatiul vertical dintre cele doua titluri.
+    """
+    return """
+    <style>
+        .simple-title-en {
+            margin-bottom: 0;
+        }
+
+        .simple-title-ro {
+            margin-top: 0;
+        }
+    </style>
+    """
+
 # =========================================================
 # AUTORI - ARTICOLE SIMPLE
 # =========================================================
@@ -230,6 +246,8 @@ def build_simple_article(article):
     html.append(
         '<article class="simple-article">'
     )
+
+    html.append(title_style())
 
     # -----------------------------------------------------
     # TITLU ENGLEZA
