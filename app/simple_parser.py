@@ -1,23 +1,24 @@
-
 import re
 import xml.etree.ElementTree as ET
 
 
 # =========================================================
-# UTILITARE
+# FUNCTII GENERALE
 # =========================================================
 
 def tag_name(element):
     """
-    Returneaza numele tagului fara namespace.
+    Returneaza numele tagului XML fara namespace.
     """
+
     return element.tag.split("}")[-1]
 
 
 def clean_text(text):
     """
-    Curata textul:
-    - elimina non-breaking spaces
+    Curata textul extras din XML.
+
+    - elimina non-breaking space
     - normalizeaza spatiile
     - elimina spatiile de la inceput si sfarsit
     """
@@ -33,14 +34,16 @@ def clean_text(text):
 
 def element_text(element):
     """
-    Returneaza tot textul continut de element,
+    Returneaza tot textul continut de un element XML,
     inclusiv textul elementelor copil.
     """
 
     if element is None:
         return ""
 
-    return clean_text("".join(element.itertext()))
+    return clean_text(
+        "".join(element.itertext())
+    )
 
 
 # =========================================================
@@ -50,6 +53,13 @@ def element_text(element):
 def is_keywords(text):
     """
     Verifica daca un text reprezinta Keywords.
+
+    Accepta:
+
+        Keywords:
+        Keywords :
+        Cuvinte cheie:
+        Cuvinte cheie :
     """
 
     if not text:
@@ -67,7 +77,13 @@ def is_keywords(text):
 
 def extract_keywords(text):
     """
-    Extrage textul de dupa Keywords: / Cuvinte cheie:
+    Extrage doar continutul de dupa:
+
+        Keywords:
+
+    sau:
+
+        Cuvinte cheie:
     """
 
     if not text:
@@ -80,58 +96,33 @@ def extract_keywords(text):
     )
 
     if match:
-        return clean_text(match.group(1))
+        return clean_text(
+            match.group(1)
+        )
 
     return clean_text(text)
 
 
 # =========================================================
-# ELEMENTE XML → STRUCTURA SIMPLA
+# EXTRAGERE BLOCURI XML
 # =========================================================
 
 def xml_to_blocks(element):
     """
-    Transforma continutul XML intr-o lista ordonata de blocuri.
+    Citeste XML-ul in ordinea in care apare.
 
-    IMPORTANT:
+    Nu extrage separat toate H4/H5/P din document.
 
-    Ordinea este pastrata exact asa cum apare in XML.
+    Pastreaza ordinea reala a blocurilor.
 
-    Nu mai cautam separat:
-        - toate H4
-        - toate H5
-        - toate P
-        - toate L
+    Blocuri recunoscute:
 
-    ci pastram ordinea documentului.
-
-    Exemple de blocuri:
-
-        {
-            "type": "H4",
-            "text": "Titlu..."
-        }
-
-        {
-            "type": "H5",
-            "text": "Autor..."
-        }
-
-        {
-            "type": "P",
-            "text": "Text..."
-        }
-
-        {
-            "type": "AFFILIATION",
-            "number": "1",
-            "text": "Institute..."
-        }
-
-        {
-            "type": "KEYWORDS",
-            "text": "cervical cancers..."
-        }
+        H2
+        H4
+        H5
+        AFFILIATION
+        P
+        KEYWORDS
     """
 
     blocks = []
@@ -202,6 +193,8 @@ def xml_to_blocks(element):
             if not text:
                 return
 
+            # Keywords sunt separate de continut.
+
             if is_keywords(text):
 
                 blocks.append({
@@ -220,7 +213,7 @@ def xml_to_blocks(element):
             return
 
         # -------------------------------------------------
-        # L
+        # L = AFILIERI
         # -------------------------------------------------
 
         if current_tag == "L":
@@ -248,6 +241,8 @@ def xml_to_blocks(element):
                         body = clean_text(
                             element_text(child)
                         )
+
+                # Pastram doar cifra.
 
                 number = re.sub(
                     r"[^\d]",
@@ -279,150 +274,40 @@ def xml_to_blocks(element):
 
 
 # =========================================================
-# EXTRAGERE INFORMATII DIN BLOCURI
-# =========================================================
-
-def extract_article_data(blocks):
-    """
-    Creeaza campurile clasice ale articolului pornind
-    de la lista ordonata de blocuri.
-
-    Lista blocks ramane principala sursa pentru builder.
-    """
-
-    h4s = []
-    authors = ""
-    affiliations = []
-    paragraphs = []
-    keywords = ""
-
-    for block in blocks:
-
-        block_type = block.get("type")
-
-        # -------------------------------------------------
-        # TITLURI
-        # -------------------------------------------------
-
-        if block_type == "H4":
-
-            h4s.append(
-                block.get("text", "")
-            )
-
-        # -------------------------------------------------
-        # AUTORI
-        # -------------------------------------------------
-
-        elif block_type == "H5":
-
-            text = block.get("text", "")
-
-            if text:
-
-                if authors:
-
-                    authors += " " + text
-
-                else:
-
-                    authors = text
-
-        # -------------------------------------------------
-        # AFILIERI
-        # -------------------------------------------------
-
-        elif block_type == "AFFILIATION":
-
-            affiliations.append({
-                "number": block.get("number", ""),
-                "text": block.get("text", "")
-            })
-
-        # -------------------------------------------------
-        # PARAGRAFE
-        # -------------------------------------------------
-
-        elif block_type == "P":
-
-            text = block.get("text", "")
-
-            if text:
-
-                paragraphs.append(text)
-
-        # -------------------------------------------------
-        # KEYWORDS
-        # -------------------------------------------------
-
-        elif block_type == "KEYWORDS":
-
-            keywords = block.get("text", "")
-
-    title_en = ""
-    title_ro = ""
-
-    if len(h4s) >= 1:
-
-        title_en = h4s[0]
-
-    if len(h4s) >= 2:
-
-        title_ro = " ".join(
-            h4s[1:]
-        )
-
-    return {
-        "title_en": title_en,
-
-        "title_ro": title_ro,
-
-        "titles": h4s,
-
-        "authors": authors,
-
-        "affiliations": affiliations,
-
-        "paragraphs": paragraphs,
-
-        "keywords": keywords,
-
-        "content": paragraphs,
-
-        "content_text": "\n\n".join(
-            paragraphs
-        )
-    }
-
-
-# =========================================================
 # IDENTIFICARE ARTICOLE
 # =========================================================
 
 def split_into_articles(blocks):
     """
-    Imparte lista ordonata de blocuri in articole.
+    Imparte blocurile in articole.
 
-    REGULA:
+    REGULA PRINCIPALA:
 
-    Un articol incepe la un H4.
+    Un articol incepe cu primul H4.
 
-    Toate H4 consecutive pana la primul H5
-    fac parte din titlul articolului.
+    Urmatorul H4 incepe un articol nou numai
+    daca articolul curent are deja continut.
 
-    Dupa H5, continutul apartine aceluiasi articol.
+    Astfel putem avea:
 
-    Urmatorul H4 dupa ce articolul are deja continut
-    incepe un articol nou.
+        H4
+        H4
+        H5
+        AFFILIATION
+        P
+        KEYWORDS
 
-    Astfel nu mai depindem de Sect-urile imbricate.
+    pentru un singur articol.
+
+    Dupa KEYWORDS, urmatorul H4
+    incepe urmatorul articol.
     """
 
     articles = []
 
     current = []
 
-    has_author_or_content = False
+    has_content = False
 
     for block in blocks:
 
@@ -434,18 +319,16 @@ def split_into_articles(blocks):
 
         if block_type == "H4":
 
-            # Daca avem deja un articol complet,
-            # incepe unul nou.
-            if (
-                current
-                and has_author_or_content
-            ):
+            # Daca avem deja un articol care contine
+            # informatii, H4-ul nou incepe alt articol.
+
+            if current and has_content:
 
                 articles.append(current)
 
                 current = []
 
-                has_author_or_content = False
+                has_content = False
 
             current.append(block)
 
@@ -461,12 +344,12 @@ def split_into_articles(blocks):
 
             if block_type in (
                 "H5",
+                "AFFILIATION",
                 "P",
-                "KEYWORDS",
-                "AFFILIATION"
+                "KEYWORDS"
             ):
 
-                has_author_or_content = True
+                has_content = True
 
     # -----------------------------------------------------
     # ULTIMUL ARTICOL
@@ -480,7 +363,211 @@ def split_into_articles(blocks):
 
 
 # =========================================================
-# PARSER PRINCIPAL
+# EXTRAGERE DATE ARTICOL
+# =========================================================
+
+def extract_article_data(blocks):
+    """
+    Extrage STRICT urmatoarele informatii:
+
+        1. primul H4  -> title_en
+        2. al doilea H4 -> title_ro
+        3. autorii
+        4. afilierile
+        5. continutul
+        6. keywords
+
+    Ordinea XML este pastrata.
+    """
+
+    # -----------------------------------------------------
+    # TITLURI
+    # -----------------------------------------------------
+
+    h4s = []
+
+    # -----------------------------------------------------
+    # AUTORI
+    # -----------------------------------------------------
+
+    authors_parts = []
+
+    # -----------------------------------------------------
+    # AFILIERI
+    # -----------------------------------------------------
+
+    affiliations = []
+
+    # -----------------------------------------------------
+    # CONTINUT
+    # -----------------------------------------------------
+
+    paragraphs = []
+
+    # -----------------------------------------------------
+    # KEYWORDS
+    # -----------------------------------------------------
+
+    keywords = ""
+
+    # -----------------------------------------------------
+    # STAREA ARTICOLULUI
+    # -----------------------------------------------------
+
+    titles_finished = False
+    authors_finished = False
+    affiliations_started = False
+    content_started = False
+
+    for block in blocks:
+
+        block_type = block.get("type")
+
+        text = clean_text(
+            block.get("text", "")
+        )
+
+        # =================================================
+        # TITLURI
+        # =================================================
+
+        if block_type == "H4":
+
+            if len(h4s) < 2:
+
+                h4s.append(text)
+
+            continue
+
+        # =================================================
+        # AUTORI
+        # =================================================
+
+        if block_type == "H5":
+
+            if text:
+
+                authors_parts.append(text)
+
+                titles_finished = True
+
+            continue
+
+        # =================================================
+        # AFILIERI
+        # =================================================
+
+        if block_type == "AFFILIATION":
+
+            affiliations_started = True
+            authors_finished = True
+
+            affiliation_text = clean_text(
+                block.get("text", "")
+            )
+
+            if affiliation_text:
+
+                affiliations.append({
+                    "number": clean_text(
+                        block.get("number", "")
+                    ),
+                    "text": affiliation_text
+                })
+
+            continue
+
+        # =================================================
+        # KEYWORDS
+        # =================================================
+
+        if block_type == "KEYWORDS":
+
+            keywords = clean_text(
+                block.get("text", "")
+            )
+
+            continue
+
+        # =================================================
+        # CONTINUT
+        # =================================================
+
+        if block_type == "P":
+
+            if text:
+
+                content_started = True
+
+                paragraphs.append(text)
+
+            continue
+
+    # =====================================================
+    # TITLE EN
+    # =====================================================
+
+    title_en = ""
+
+    if len(h4s) >= 1:
+
+        title_en = h4s[0]
+
+    # =====================================================
+    # TITLE RO
+    # =====================================================
+
+    title_ro = ""
+
+    if len(h4s) >= 2:
+
+        title_ro = h4s[1]
+
+    # =====================================================
+    # AUTORI
+    # =====================================================
+
+    authors = ", ".join(
+        part
+        for part in authors_parts
+        if part
+    )
+
+    # =====================================================
+    # REZULTAT
+    # =====================================================
+
+    return {
+
+        # Titluri
+        "title_en": title_en,
+        "title_ro": title_ro,
+
+        # Pastram si lista pentru compatibilitate
+        "titles": h4s,
+
+        # Autori
+        "authors": authors,
+
+        # Afilieri
+        "affiliations": affiliations,
+
+        # Continut
+        "paragraphs": paragraphs,
+
+        "content": paragraphs,
+
+        "content_text": "\n\n".join(
+            paragraphs
+        ),
+
+        # Keywords
+        "keywords": keywords
+    }
+
+
+# =========================================================
+# PARSER PRINCIPAL - ARTICOLE SIMPLE
 # =========================================================
 
 def parse_simple_xml(xml_path):
@@ -489,18 +576,25 @@ def parse_simple_xml(xml_path):
 
     IMPORTANT:
 
-    Acest parser nu foloseste parser.py.
+    Acest parser este complet separat de:
 
-    Structura XML este citita in ordinea documentului
-    si transformata intr-o lista de blocks.
+        parser.py
 
-    Builderul poate decide ulterior cum afiseaza fiecare
-    tip de block.
+    si este folosit exclusiv pentru:
+
+        articole simple
     """
+
+    # =====================================================
+    # CITIRE XML
+    # =====================================================
 
     try:
 
-        tree = ET.parse(xml_path)
+        tree = ET.parse(
+            xml_path
+        )
+
         root = tree.getroot()
 
     except ET.ParseError as exc:
@@ -510,7 +604,7 @@ def parse_simple_xml(xml_path):
         ) from exc
 
     # =====================================================
-    # PARCURGEREA PART-URILOR
+    # GASIM PART-URILE
     # =====================================================
 
     parts = []
@@ -521,12 +615,16 @@ def parse_simple_xml(xml_path):
 
             parts.append(element)
 
-    # Daca nu exista Part,
-    # folosim documentul complet.
+    # Daca XML-ul nu are Part,
+    # procesam documentul complet.
 
     if not parts:
 
         parts = [root]
+
+    # =====================================================
+    # LISTA ARTICOLE
+    # =====================================================
 
     articles = []
 
@@ -537,7 +635,7 @@ def parse_simple_xml(xml_path):
     for part in parts:
 
         # -------------------------------------------------
-        # TITLU SECTIUNE / CONFERINTA
+        # H2 - TITLU SECTIUNE
         # -------------------------------------------------
 
         section_title = ""
@@ -547,26 +645,36 @@ def parse_simple_xml(xml_path):
             if tag_name(child) != "H2":
                 continue
 
-            text = element_text(child)
+            text = element_text(
+                child
+            )
 
             if text:
 
                 section_title = text
+
                 break
 
         # -------------------------------------------------
         # XML → BLOCKS
         # -------------------------------------------------
 
-        blocks = xml_to_blocks(part)
+        blocks = xml_to_blocks(
+            part
+        )
 
-        # Eliminam H2 din blocks deoarece este
-        # titlul Part-ului, nu continutul articolului.
+        # -------------------------------------------------
+        # H2 NU ESTE CONTINUTUL ARTICOLULUI
+        # -------------------------------------------------
 
         article_blocks = [
+
             block
+
             for block in blocks
+
             if block.get("type") != "H2"
+
         ]
 
         # -------------------------------------------------
@@ -581,47 +689,49 @@ def parse_simple_xml(xml_path):
         # PROCESAM FIECARE ARTICOL
         # -------------------------------------------------
 
-        for article_blocks_group in article_groups:
+        for group in article_groups:
 
-            # ---------------------------------------------
-            # EXTRAGEM DATELE CLASICE
-            # ---------------------------------------------
+            if not group:
+                continue
 
-            article_data = extract_article_data(
-                article_blocks_group
+            article = extract_article_data(
+                group
             )
 
-            # ---------------------------------------------
-            # PASTRAM STRUCTURA ORIGINALA
-            # ---------------------------------------------
+            # -------------------------------------------------
+            # PASTRAM BLOCKURILE ORIGINALE
+            # -------------------------------------------------
 
-            article_data["blocks"] = (
-                article_blocks_group
-            )
+            article["blocks"] = group
 
-            article_data["section_title"] = (
+            # -------------------------------------------------
+            # TITLU SECTIUNE
+            # -------------------------------------------------
+
+            article["section_title"] = (
                 section_title
             )
 
-            # ---------------------------------------------
-            # IGNORAM GRUPURILE FARA CONTINUT
-            # ---------------------------------------------
+            # -------------------------------------------------
+            # IGNORAM GRUPURILE GOALE
+            # -------------------------------------------------
 
             if not (
-                article_data["title_en"]
-                or article_data["title_ro"]
-                or article_data["authors"]
-                or article_data["paragraphs"]
+                article["title_en"]
+                or article["title_ro"]
+                or article["authors"]
+                or article["paragraphs"]
+                or article["keywords"]
             ):
 
                 continue
 
             articles.append(
-                article_data
+                article
             )
 
     # =====================================================
-    # REZULTAT FINAL
+    # PRIMUL ARTICOL
     # =====================================================
 
     first_article = (
@@ -630,19 +740,19 @@ def parse_simple_xml(xml_path):
         else {}
     )
 
+    # =====================================================
+    # REZULTAT FINAL
+    # =====================================================
+
     return {
 
         "type": "simple",
 
-        # -------------------------------------------------
-        # LISTA COMPLETA DE ARTICOLE
-        # -------------------------------------------------
-
+        # Lista completa
         "articles": articles,
 
-        # -------------------------------------------------
-        # PRIMUL ARTICOL - COMPATIBILITATE
-        # -------------------------------------------------
+        # Primul articol
+        # pentru compatibilitate
 
         "title_en": first_article.get(
             "title_en",
@@ -679,13 +789,8 @@ def parse_simple_xml(xml_path):
             ""
         ),
 
-        # -------------------------------------------------
-        # BLOCKS PRIMULUI ARTICOL
-        # -------------------------------------------------
-
         "blocks": first_article.get(
             "blocks",
             []
         )
     }
-
