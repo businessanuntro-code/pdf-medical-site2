@@ -4,40 +4,38 @@ import xml.etree.ElementTree as ET
 
 # =========================================================
 # SIMPLE PARSER
+# =========================================================
 #
-# ARTICOLE SIMPLE
+# Parser exclusiv pentru ARTICOLE SIMPLE.
 #
-# REGULA PRINCIPALA:
+# NU modifica parser.py pentru articolele stiintifice.
 #
-# Nu ne bazam strict pe H4 / H5 / P.
+# Obiectiv:
 #
-# Interpretam articolul dupa POZITIA informatiei:
+# 1. TITLU EN
+# 2. TITLU RO
+# 3. AUTORI
+# 4. AFILIERI
+# 5. CONTINUT
+# 6. KEYWORDS
 #
-# 1. KEYWORDS
-# 2. CONTINUT
-# 3. AFILIERI
-# 4. AUTORI
-# 5. TITLU / TITLURI
+# Parserul NU se bazeaza rigid pe H1/H2/H3/H4/H5.
+# Tag-urile XML sunt folosite doar ca indicii.
 #
-# Fluxul articolelor stiintifice NU este afectat.
+# Identificarea se face in principal dupa:
+# - pozitia informatiei
+# - continutul textului
+# - tipul blocului
 # =========================================================
 
 
 # =========================================================
-# UTILITARE GENERALE
+# FUNCTII GENERALE
 # =========================================================
-
-def tag_name(element):
-    """
-    Returneaza numele tagului fara namespace.
-    """
-
-    return element.tag.split("}")[-1]
-
 
 def clean_text(text):
     """
-    Normalizeaza textul extras din XML.
+    Curata si normalizeaza textul.
     """
 
     if not text:
@@ -47,6 +45,7 @@ def clean_text(text):
     text = text.replace("\u200b", "")
     text = text.replace("\ufeff", "")
 
+    # Normalizeaza whitespace
     text = re.sub(r"\s+", " ", text)
 
     return text.strip()
@@ -54,42 +53,54 @@ def clean_text(text):
 
 def element_text(element):
     """
-    Returneaza tot textul continut de element,
-    inclusiv elementele copil.
+    Returneaza tot textul continut de un element,
+    inclusiv textul elementelor copil.
     """
 
     if element is None:
         return ""
 
-    return clean_text(
-        "".join(element.itertext())
-    )
+    text = "".join(element.itertext())
+
+    return clean_text(text)
+
+
+def get_tag(element):
+    """
+    Returneaza numele tag-ului fara namespace.
+    """
+
+    if element is None:
+        return ""
+
+    return element.tag.split("}")[-1]
 
 
 # =========================================================
 # KEYWORDS
 # =========================================================
 
-def is_keywords(text):
+def is_keywords_text(text):
     """
-    Detecteaza:
+    Verifica daca un text reprezinta Keywords.
 
-        Keywords:
+    Accepta:
 
-    sau:
-
-        Cuvinte cheie:
+    Keywords:
+    Keywords :
+    Cuvinte cheie:
+    Cuvinte cheie :
     """
 
     if not text:
         return False
 
-    normalized = clean_text(text).lower()
+    text = clean_text(text)
 
     return bool(
         re.match(
             r"^(?:keywords|cuvinte\s+cheie)\s*:",
-            normalized,
+            text,
             flags=re.IGNORECASE
         )
     )
@@ -97,540 +108,60 @@ def is_keywords(text):
 
 def extract_keywords(text):
     """
-    Extrage numai continutul de dupa:
-
-        Keywords:
-
-    sau:
-
-        Cuvinte cheie:
+    Extrage continutul de dupa Keywords:
+    sau Cuvinte cheie:
     """
 
     if not text:
         return ""
 
+    text = clean_text(text)
+
     match = re.match(
-        r"^\s*(?:keywords|cuvinte\s+cheie)\s*:\s*(.*)$",
+        r"^(?:keywords|cuvinte\s+cheie)\s*:\s*(.*)$",
         text,
         flags=re.IGNORECASE
     )
 
     if match:
-        return clean_text(
-            match.group(1)
-        )
+        return clean_text(match.group(1))
 
-    return clean_text(text)
-
-
-# =========================================================
-# EXTRAGERE BLOCURI XML
-# =========================================================
-
-def xml_to_blocks(element):
-    """
-    Transforma XML-ul intr-o lista ORDONATA de blocuri.
-
-    Nu eliminam informatia in functie de tag.
-
-    Pastram:
-        H2
-        H4
-        H5
-        P
-        L / LBody
-        alte texte relevante
-
-    IMPORTANT:
-    Ordinea XML-ului este pastrata.
-    """
-
-    blocks = []
-
-    def walk(node):
-
-        current_tag = tag_name(node)
-
-        # -------------------------------------------------
-        # H2
-        # -------------------------------------------------
-
-        if current_tag == "H2":
-
-            text = element_text(node)
-
-            if text:
-                blocks.append({
-                    "type": "H2",
-                    "text": text
-                })
-
-            return
-
-        # -------------------------------------------------
-        # H4
-        # -------------------------------------------------
-
-        if current_tag == "H4":
-
-            text = element_text(node)
-
-            if text:
-                blocks.append({
-                    "type": "H4",
-                    "text": text
-                })
-
-            return
-
-        # -------------------------------------------------
-        # H5
-        # -------------------------------------------------
-
-        if current_tag == "H5":
-
-            text = element_text(node)
-
-            if text:
-                blocks.append({
-                    "type": "H5",
-                    "text": text
-                })
-
-            return
-
-        # -------------------------------------------------
-        # P
-        # -------------------------------------------------
-
-        if current_tag == "P":
-
-            text = element_text(node)
-
-            if text:
-
-                if is_keywords(text):
-
-                    blocks.append({
-                        "type": "KEYWORDS",
-                        "text": extract_keywords(text),
-                        "raw_text": text
-                    })
-
-                else:
-
-                    blocks.append({
-                        "type": "P",
-                        "text": text
-                    })
-
-            return
-
-        # -------------------------------------------------
-        # L
-        #
-        # Afiliarile pot fi in:
-        #
-        # <L>
-        #   <LI>
-        #       <Lbl>1.</Lbl>
-        #       <LBody>...</LBody>
-        #   </LI>
-        # </L>
-        # -------------------------------------------------
-
-        if current_tag == "L":
-
-            for li in list(node):
-
-                if tag_name(li) != "LI":
-                    continue
-
-                number = ""
-                body = ""
-
-                for child in list(li):
-
-                    child_tag = tag_name(child)
-
-                    if child_tag == "Lbl":
-
-                        number = clean_text(
-                            element_text(child)
-                        )
-
-                    elif child_tag == "LBody":
-
-                        body = clean_text(
-                            element_text(child)
-                        )
-
-                number = re.sub(
-                    r"[^\d]",
-                    "",
-                    number
-                )
-
-                if body:
-
-                    blocks.append({
-                        "type": "L",
-                        "number": number,
-                        "text": body
-                    })
-
-            return
-
-        # -------------------------------------------------
-        # ALTE ELEMENTE
-        #
-        # Continuam recursiv.
-        # -------------------------------------------------
-
-        for child in list(node):
-
-            walk(child)
-
-    walk(element)
-
-    return blocks
-
-
-# =========================================================
-# ELIMINARE H2
-# =========================================================
-
-def remove_h2_blocks(blocks):
-    """
-    H2 reprezinta de regula titlul sectiunii/conferintei.
-
-    Nu face parte din articol.
-    """
-
-    return [
-        block
-        for block in blocks
-        if block.get("type") != "H2"
-    ]
-
-
-# =========================================================
-# DETECTARE TEXT MARE
-# =========================================================
-
-def text_length(text):
-    """
-    Lungimea reala a unui bloc de text.
-    """
-
-    return len(
-        clean_text(text)
-    )
-
-
-def find_keywords_position(blocks):
-    """
-    Gaseste pozitia ultimului bloc Keywords.
-
-    Folosim ultimul Keywords deoarece un articol
-    poate avea mai multe aparitii accidentale.
-    """
-
-    position = -1
-
-    for index, block in enumerate(blocks):
-
-        if block.get("type") == "KEYWORDS":
-
-            position = index
-
-    return position
-
-
-# =========================================================
-# DETECTARE CONTINUT
-# =========================================================
-
-def find_content_block(blocks, keywords_position):
-    """
-    Gaseste blocul de continut.
-
-    REGULA PRINCIPALA:
-
-    Continutul este de regula cel mai mare bloc de text
-    aflat inainte de Keywords.
-
-    Nu ne intereseaza daca acel bloc este:
-        P
-        H4
-        H5
-        sau alt element.
-
-    Conteaza continutul si pozitia.
-    """
-
-    if keywords_position <= 0:
-        return -1
-
-    candidates = []
-
-    for index in range(
-        keywords_position
-    ):
-
-        block = blocks[index]
-
-        block_type = block.get(
-            "type"
-        )
-
-        text = clean_text(
-            block.get("text", "")
-        )
-
-        if not text:
-            continue
-
-        # -------------------------------------------------
-        # Nu consideram titlurile
-        # -------------------------------------------------
-
-        if block_type == "H2":
-            continue
-
-        if block_type == "H4":
-            continue
-
-        if block_type == "H5":
-            continue
-
-        # -------------------------------------------------
-        # Nu consideram L ca fiind continut.
-        # L = afiliere
-        # -------------------------------------------------
-
-        if block_type == "L":
-            continue
-
-        # -------------------------------------------------
-        # Keywords nu poate fi continut
-        # -------------------------------------------------
-
-        if block_type == "KEYWORDS":
-            continue
-
-        # -------------------------------------------------
-        # Candidatul trebuie sa fie suficient de mare.
-        #
-        # Evitam texte foarte scurte.
-        # -------------------------------------------------
-
-        if len(text) < 80:
-            continue
-
-        candidates.append(
-            (
-                index,
-                len(text)
-            )
-        )
-
-    if not candidates:
-        return -1
-
-    # Cel mai mare bloc
-    candidates.sort(
-        key=lambda item: item[1],
-        reverse=True
-    )
-
-    return candidates[0][0]
+    return text
 
 
 # =========================================================
 # DETECTARE AUTORI
 # =========================================================
 
-def looks_like_author_block(text):
+def has_author_superscript(text):
     """
-    Detecteaza un bloc care seamana cu o lista de autori.
+    Verifica daca textul contine numere asociate autorilor.
 
     Exemple:
 
-        C. Achiroaei1,2, Diana-Ioana Panaite1,2, C. Volovăț1,2
-
-        Ancuța-Elena Baciu1, Irina-Maria Dumitru1,2
-
-        Eugen Brătucu, Claudiu Daha, Laurenţiu Simion
-
-    IMPORTANT:
-
-    Nu ne bazam pe H5.
-
-    Putem avea autorii in H5 sau P.
+    Ancuța-Elena Baciu1
+    Irina-Maria Dumitru1,2
+    C. Achiroaei1,2
     """
 
     if not text:
         return False
 
-    text = clean_text(text)
-
-    # -----------------------------------------------------
-    # Nu vrem Keywords
-    # -----------------------------------------------------
-
-    if is_keywords(text):
-        return False
-
-    # -----------------------------------------------------
-    # Nu vrem propozitii lungi
-    # -----------------------------------------------------
-
-    if len(text) > 700:
-        return False
-
-    # -----------------------------------------------------
-    # Daca avem prea multe cuvinte,
-    # probabil nu sunt autori.
-    # -----------------------------------------------------
-
-    words = text.split()
-
-    if len(words) > 80:
-        return False
-
-    # -----------------------------------------------------
-    # Separare prin virgula
-    # -----------------------------------------------------
-
-    has_comma = "," in text
-
-    # -----------------------------------------------------
-    # Numar lipit de nume:
-    #
-    # Achiroaei1
-    # Panaite1,2
-    # -----------------------------------------------------
-
-    has_superscript_number = bool(
+    return bool(
         re.search(
-            r"[A-Za-zÀ-ÖØ-öø-ÿĂăÂâÎîȘșŞşȚțŢţ\-]\d",
+            r"[A-Za-zÀ-ÖØ-öø-ÿĂăÂâÎîȘșŞşȚțŢţ\)])"
+            r"\s*\d+(?:\s*,\s*\d+)*\s*(?=,|$)",
             text
         )
     )
 
-    # -----------------------------------------------------
-    # Cuvinte tipice de afiliere
-    # -----------------------------------------------------
 
-    affiliation_words = [
-        "institute",
-        "university",
-        "faculty",
-        "hospital",
-        "clinical",
-        "center",
-        "centre",
-        "department",
-        "laboratory",
-        "bucharest",
-        "romania",
-        "medical",
-        "oncology"
-    ]
-
-    lower = text.lower()
-
-    if any(
-        word in lower
-        for word in affiliation_words
-    ):
-        return False
-
-    # -----------------------------------------------------
-    # Structura autorilor
-    # -----------------------------------------------------
-
-    if has_superscript_number:
-        return True
-
-    if has_comma and len(words) <= 40:
-        return True
-
-    # -----------------------------------------------------
-    # Un singur autor
-    #
-    # Ex:
-    #
-    # Popescu Ion
-    # -----------------------------------------------------
-
-    if 2 <= len(words) <= 8:
-
-        # Evitam frazele normale.
-        if not re.search(
-            r"[.!?]",
-            text
-        ):
-            return True
-
-    return False
-
-
-def find_authors_block(
-    blocks,
-    content_position
-):
+def looks_like_person_name(text):
     """
-    Cauta autorii in zona aflata inaintea continutului.
+    Verifica aproximativ daca textul seamana cu o lista de autori.
 
-    Autorii sunt ultimul bloc relevant inaintea afilierilor.
-    """
-
-    if content_position <= 0:
-        return -1
-
-    # Cautam de jos in sus.
-    for index in range(
-        content_position - 1,
-        -1,
-        -1
-    ):
-
-        block = blocks[index]
-
-        block_type = block.get(
-            "type"
-        )
-
-        text = clean_text(
-            block.get("text", "")
-        )
-
-        if not text:
-            continue
-
-        # Nu vrem lista de afiliere
-        if block_type == "L":
-            continue
-
-        if looks_like_author_block(text):
-
-            return index
-
-    return -1
-
-
-# =========================================================
-# DETECTARE AFILIERI
-# =========================================================
-
-def looks_like_affiliation(text):
-    """
-    Detecteaza o afiliere.
-
-    Nu ne bazam exclusiv pe L.
-    Poate fi si P / H5.
+    Nu incercam sa identificam perfect numele.
+    Scopul este sa distingem autorii de afiliere si continut.
     """
 
     if not text:
@@ -638,512 +169,996 @@ def looks_like_affiliation(text):
 
     text = clean_text(text)
 
-    lower = text.lower()
+    if len(text) > 500:
+        return False
 
-    affiliation_words = [
-        "institute",
+    # Nu este afiliere daca are expresii foarte specifice.
+    institutional_words = [
         "university",
-        "faculty",
+        "universit",
+        "institute",
+        "institut",
         "hospital",
+        "spital",
+        "clinic",
         "clinical",
+        "department",
+        "departament",
         "center",
         "centre",
-        "department",
         "laboratory",
+        "laborator",
         "bucharest",
+        "bucurești",
         "romania",
-        "medical",
-        "oncology",
+        "faculty",
+        "facultatea",
+        "medical center",
+        "medical centre",
+        "association",
+        "asociația",
         "division",
-        "school",
-        "clinic"
+        "nuclearelectrica"
     ]
 
-    for word in affiliation_words:
+    lowered = text.lower()
 
-        if word in lower:
+    for word in institutional_words:
+        if word in lowered:
+            return False
+
+    # Autorii sunt de regula separati prin virgule.
+    if "," in text:
+        parts = [
+            clean_text(part)
+            for part in text.split(",")
+            if clean_text(part)
+        ]
+
+        if len(parts) >= 2:
+            valid_parts = 0
+
+            for part in parts:
+
+                # eliminam eventualele superscripturi
+                name = re.sub(
+                    r"\d+(?:\s*,\s*\d+)*$",
+                    "",
+                    part
+                ).strip()
+
+                words = name.split()
+
+                if len(words) >= 2:
+                    valid_parts += 1
+
+            if valid_parts >= 2:
+                return True
+
+    # Caz cu un singur autor.
+    words = text.split()
+
+    if 2 <= len(words) <= 8:
+
+        # Evitam propozitii.
+        if not re.search(r"[.!?]", text):
             return True
 
     return False
 
 
-def extract_affiliation_blocks(
-    blocks,
-    authors_position,
-    content_position
-):
+# =========================================================
+# AFILIERI
+# =========================================================
+
+def looks_like_affiliation(text):
     """
-    Extrage afilierile dintre autori si continut.
+    Detecteaza o afiliere pe baza continutului.
 
-    Pot fi:
-        L
-        P
-        H5
+    Exemple:
 
-    si pot exista una sau mai multe.
+    1. Institute of Oncology, Bucharest, Romania
+    Faculty of Physics, University of Bucharest, Romania
+    Neolife Medical Center, Bucharest, Romania
+    """
+
+    if not text:
+        return False
+
+    text = clean_text(text)
+
+    if not text:
+        return False
+
+    lowered = text.lower()
+
+    affiliation_words = [
+        "university",
+        "universit",
+        "institute",
+        "institut",
+        "hospital",
+        "spital",
+        "clinic",
+        "clinical",
+        "department",
+        "departament",
+        "faculty",
+        "facultatea",
+        "center",
+        "centre",
+        "laboratory",
+        "laborator",
+        "association",
+        "asociația",
+        "division",
+        "bucharest",
+        "bucurești",
+        "romania",
+        "nuclearelectrica",
+        "medical",
+        "oncology",
+        "oncologie"
+    ]
+
+    for word in affiliation_words:
+        if word in lowered:
+            return True
+
+    # Afilierea poate incepe cu:
+    # 1.
+    # 2.
+    # 3.
+    if re.match(r"^\d+\.", text):
+        return True
+
+    return False
+
+
+def clean_affiliation_number(text):
+    """
+    Elimina numarul de afiliere de la inceput.
+    """
+
+    if not text:
+        return ""
+
+    text = clean_text(text)
+
+    text = re.sub(
+        r"^\d+\.\s*",
+        "",
+        text
+    )
+
+    return clean_text(text)
+
+
+# =========================================================
+# EXTRAGERE AFILIERI
+# =========================================================
+
+def extract_affiliations_from_element(element):
+    """
+    Extrage afilierea din Footnote, H4, H5, LBody etc.
     """
 
     affiliations = []
 
-    if authors_position < 0:
-        start = 0
-    else:
-        start = authors_position + 1
+    tag = get_tag(element)
 
-    if content_position < 0:
-        end = len(blocks)
-    else:
-        end = content_position
+    text = element_text(element)
 
-    for index in range(
-        start,
-        end
-    ):
+    if not text:
+        return affiliations
 
-        block = blocks[index]
+    # -----------------------------------------------------
+    # Footnote
+    # -----------------------------------------------------
 
-        block_type = block.get(
-            "type"
-        )
+    if tag == "Footnote":
 
-        text = clean_text(
-            block.get("text", "")
-        )
+        text = clean_affiliation_number(text)
 
-        if not text:
-            continue
+        if text:
+            affiliations.append(text)
 
-        # -------------------------------------------------
-        # Lista L = afiliere aproape sigura
-        # -------------------------------------------------
+        return affiliations
 
-        if block_type == "L":
+    # -----------------------------------------------------
+    # LBody
+    # -----------------------------------------------------
 
-            affiliations.append({
-                "number": block.get(
-                    "number",
-                    ""
-                ),
-                "text": text
-            })
+    if tag == "LBody":
 
-            continue
+        text = clean_affiliation_number(text)
 
-        # -------------------------------------------------
-        # P / H5 care seamana cu afiliere
-        # -------------------------------------------------
+        if text:
+            affiliations.append(text)
 
-        if looks_like_affiliation(text):
+        return affiliations
 
-            affiliations.append({
-                "number": "",
-                "text": text
-            })
+    # -----------------------------------------------------
+    # Alte elemente
+    # -----------------------------------------------------
+
+    if looks_like_affiliation(text):
+
+        text = clean_affiliation_number(text)
+
+        if text:
+            affiliations.append(text)
 
     return affiliations
 
 
 # =========================================================
-# DETECTARE TITLURI
+# TITLURI
 # =========================================================
 
-def extract_titles(
-    blocks,
-    authors_position
-):
+def split_combined_title(text):
     """
-    Titlurile sunt imediat inaintea autorilor.
+    In unele XML-uri cele doua titluri sunt in acelasi element.
 
-    Regula:
+    Exemplu:
 
-        primul titlu = title_en
+    Risk of pancreatic fistula after pancreatoduodenectomy –
+    a point of view Riscul de fistulă pancreatică după
+    pancreatoduodenectomie – un punct de vedere
 
-        al doilea titlu = title_ro
+    Nu exista un separator XML clar.
 
-    Nu ne bazam exclusiv pe H4.
+    Functia incearca sa identifice partea romana.
 
-    Cautam blocurile relevante din zona de inceput.
+    Daca nu poate separa sigur, returneaza textul integral
+    ca primul titlu.
     """
 
-    if not blocks:
-        return []
+    if not text:
+        return "", ""
+
+    text = clean_text(text)
 
     # -----------------------------------------------------
-    # Zona de titluri
+    # Incercam sa gasim inceputul partii romanesti.
     # -----------------------------------------------------
 
-    if authors_position >= 0:
+    romanian_markers = [
+        " Riscul ",
+        " Riscurile ",
+        " Tratamentul ",
+        " Tratamentul ",
+        " Evaluarea ",
+        " Identificarea ",
+        " Standarde ",
+        " Dinamica ",
+        " Genotipul ",
+        " Trasabilitatea ",
+        " Trasabilitatea ",
+        " Cancerul ",
+        " Cancerului ",
+        " Utilizarea ",
+        " Analiza ",
+        " Rezultatele ",
+        " Caracteristicile ",
+        " Rolul ",
+        " Importanța ",
+        " Importanta ",
+        " Managementul ",
+        " Diagnosticul ",
+        " Experiența ",
+        " Experienta ",
+        " Studiul ",
+        " Eficiența ",
+        " Eficienta ",
+        " Perspective "
+    ]
 
-        candidate_end = authors_position
+    positions = []
 
-    else:
+    lowered = text.lower()
 
-        candidate_end = min(
-            len(blocks),
-            6
+    for marker in romanian_markers:
+
+        pos = lowered.find(marker.lower())
+
+        if pos > 0:
+            positions.append(pos)
+
+    if positions:
+
+        pos = min(positions)
+
+        english = clean_text(text[:pos])
+        romanian = clean_text(text[pos:])
+
+        if english and romanian:
+            return english, romanian
+
+    return text, ""
+
+
+def extract_titles_from_block(elements):
+    """
+    Extrage maximum doua titluri din inceputul articolului.
+
+    Poate procesa:
+
+    H1 + H2
+    H2
+    H4 + H4
+    H2 care contine EN + RO
+    """
+
+    title_candidates = []
+
+    for element in elements:
+
+        tag = get_tag(element)
+
+        if tag not in {
+            "H1",
+            "H2",
+            "H4"
+        }:
+            continue
+
+        text = element_text(element)
+
+        if not text:
+            continue
+
+        # Keywords nu este titlu.
+        if is_keywords_text(text):
+            continue
+
+        title_candidates.append(
+            (tag, text)
         )
+
+    if not title_candidates:
+        return "", "", []
+
+    # -----------------------------------------------------
+    # Primul candidat
+    # -----------------------------------------------------
+
+    first_tag, first_text = title_candidates[0]
+
+    title_en = first_text
+    title_ro = ""
+
+    # -----------------------------------------------------
+    # Daca primul contine doua titluri.
+    # -----------------------------------------------------
+
+    combined_en, combined_ro = split_combined_title(
+        first_text
+    )
+
+    if combined_ro:
+
+        title_en = combined_en
+        title_ro = combined_ro
+
+    # -----------------------------------------------------
+    # Al doilea candidat
+    # -----------------------------------------------------
+
+    if not title_ro and len(title_candidates) >= 2:
+
+        second_tag, second_text = title_candidates[1]
+
+        # Daca al doilea este un titlu separat.
+        title_ro = second_text
+
+    return (
+        clean_text(title_en),
+        clean_text(title_ro),
+        title_candidates
+    )
+
+
+# =========================================================
+# IDENTIFICAREA ARTICOLULUI
+# =========================================================
+
+def find_article_sections(root):
+    """
+    Identifica blocurile care reprezinta articole.
+
+    In XML-ul AutoTag observat, articolele sunt grupate
+    in Sect-uri.
+
+    Incercam sa gasim Sect-ul care contine:
+    - un titlu
+    - autori
+    - continut
+
+    IMPORTANT:
+    Nu luam toate Sect-urile imbricate.
+    """
+
+    articles = []
+
+    def recursive_search(element):
+
+        if get_tag(element) == "Sect":
+
+            direct_children = list(element)
+
+            tags = [
+                get_tag(child)
+                for child in direct_children
+            ]
+
+            has_title = any(
+                tag in {"H1", "H2", "H4"}
+                for tag in tags
+            )
+
+            if has_title:
+
+                # Verificam daca exista un bloc de text
+                # sau autori in interior.
+                texts = []
+
+                for child in direct_children:
+
+                    text = element_text(child)
+
+                    if text:
+                        texts.append(text)
+
+                joined = " ".join(texts)
+
+                has_content = (
+                    len(joined) > 100
+                    or looks_like_person_name(joined)
+                )
+
+                if has_content:
+
+                    articles.append(element)
+
+                    # Nu mai coboram in Sect-urile copil.
+                    return
+
+        for child in list(element):
+            recursive_search(child)
+
+    recursive_search(root)
+
+    return articles
+
+
+# =========================================================
+# EXTRAGERE BLOCURI ARTICOL
+# =========================================================
+
+def get_article_elements(section):
+    """
+    Obtine elementele relevante dintr-un articol.
+
+    Se pastreaza ordinea originala din XML.
+    """
+
+    elements = []
+
+    for element in section.iter():
+
+        if element is section:
+            continue
+
+        tag = get_tag(element)
+
+        if tag in {
+            "H1",
+            "H2",
+            "H3",
+            "H4",
+            "H5",
+            "P",
+            "Footnote",
+            "L",
+            "LI",
+            "Lbl",
+            "LBody"
+        }:
+
+            elements.append(element)
+
+    return elements
+
+
+# =========================================================
+# EXTRAGERE AUTORI
+# =========================================================
+
+def extract_authors(elements, title_candidates):
+    """
+    Cauta autorii in blocul de dupa titlu.
+
+    Prioritate:
+
+    1. H3 / H5
+    2. P
+    3. alte texte scurte care seamana cu o lista de nume
+    """
+
+    title_elements = {
+        id(element)
+        for element in []
+    }
+
+    # -----------------------------------------------------
+    # Determinam pozitia primului titlu.
+    # -----------------------------------------------------
+
+    title_positions = []
+
+    for index, element in enumerate(elements):
+
+        tag = get_tag(element)
+
+        text = element_text(element)
+
+        if tag in {"H1", "H2", "H4"} and text:
+
+            if not is_keywords_text(text):
+
+                title_positions.append(index)
+
+    start_position = 0
+
+    if title_positions:
+        start_position = max(title_positions[:2]) + 1
+
+    # -----------------------------------------------------
+    # Cautam in primele elemente dupa titlu.
+    # -----------------------------------------------------
 
     candidates = []
 
     for index in range(
-        candidate_end
+        start_position,
+        min(len(elements), start_position + 12)
     ):
 
-        block = blocks[index]
+        element = elements[index]
 
-        block_type = block.get(
-            "type"
-        )
-
-        text = clean_text(
-            block.get("text", "")
-        )
+        tag = get_tag(element)
+        text = element_text(element)
 
         if not text:
             continue
 
-        # H2 nu este titlu articol
-        if block_type == "H2":
-            continue
-
-        # Nu vrem keywords
-        if block_type == "KEYWORDS":
-            continue
-
-        # Nu vrem afiliere
-        if block_type == "L":
-            continue
+        if is_keywords_text(text):
+            break
 
         if looks_like_affiliation(text):
+            break
+
+        if len(text) > 500:
+            break
+
+        # H3/H5 sunt foarte probabile.
+        if tag in {"H3", "H5"}:
+
+            candidates.append(text)
+
             continue
 
-        if looks_like_author_block(text):
+        if tag == "P" and looks_like_person_name(text):
+
+            candidates.append(text)
+
+    if not candidates:
+        return ""
+
+    # Primul candidat relevant.
+    authors = candidates[0]
+
+    return clean_text(authors)
+
+
+# =========================================================
+# EXTRAGERE AFILIERI
+# =========================================================
+
+def extract_affiliations(elements):
+    """
+    Extrage toate afilierile dintre autori si continut.
+
+    Sunt acceptate:
+
+    Footnote
+    LBody
+    H4
+    H5
+    P
+
+    doar daca textul seamana cu o afiliere.
+    """
+
+    affiliations = []
+
+    started = False
+
+    for element in elements:
+
+        tag = get_tag(element)
+
+        text = element_text(element)
+
+        if not text:
             continue
 
         # -------------------------------------------------
-        # Titlurile sunt de regula texte scurte/medii
+        # Keywords = stop
+        # -------------------------------------------------
+
+        if is_keywords_text(text):
+            break
+
+        # -------------------------------------------------
+        # Detectam autorii
+        # -------------------------------------------------
+
+        if not started:
+
+            if (
+                tag in {"H3", "H5"}
+                and looks_like_person_name(text)
+            ):
+                started = True
+                continue
+
+            if tag == "P" and looks_like_person_name(text):
+                started = True
+                continue
+
+            continue
+
+        # -------------------------------------------------
+        # Continutul lung = am iesit din zona afilierilor
         # -------------------------------------------------
 
         if len(text) > 500:
-            continue
+            break
 
-        candidates.append(
-            text
-        )
+        # -------------------------------------------------
+        # Liste XML
+        # -------------------------------------------------
 
-    # Pastram maxim doua titluri.
-    return candidates[:2]
+        if tag in {
+            "Footnote",
+            "LBody"
+        }:
+
+            if looks_like_affiliation(text):
+
+                affiliation = clean_affiliation_number(
+                    text
+                )
+
+                if affiliation:
+                    affiliations.append(
+                        affiliation
+                    )
+
+                continue
+
+        # -------------------------------------------------
+        # H4/H5
+        # -------------------------------------------------
+
+        if tag in {"H4", "H5"}:
+
+            if looks_like_affiliation(text):
+
+                affiliation = clean_affiliation_number(
+                    text
+                )
+
+                if affiliation:
+                    affiliations.append(
+                        affiliation
+                    )
+
+                continue
+
+        # -------------------------------------------------
+        # P
+        # -------------------------------------------------
+
+        if tag == "P":
+
+            if looks_like_affiliation(text):
+
+                affiliation = clean_affiliation_number(
+                    text
+                )
+
+                if affiliation:
+                    affiliations.append(
+                        affiliation
+                    )
+
+                continue
+
+            # Daca nu mai este afiliere, continuam
+            # pentru a permite continutul sa fie identificat.
+            if len(text) > 100:
+                break
+
+    return affiliations
 
 
 # =========================================================
-# CONTINUT
+# EXTRAGERE CONTINUT
 # =========================================================
 
-def extract_content(
-    blocks,
-    content_position,
-    keywords_position
-):
+def extract_content(elements, authors, affiliations):
     """
-    Extrage continutul dintre:
+    Extrage continutul articolului.
 
-        afilieri
+    Continutul este textul aflat:
+    - dupa titlu
+    - dupa autori
+    - dupa afilieri
+    - inainte de Keywords.
 
-    si:
-
-        Keywords
-
-    Continutul poate fi un singur paragraf mare
-    sau mai multe paragrafe.
-
-    IMPORTANT:
-
-    Nu eliminam textul doar pentru ca este P/H5/H4.
-    Pozitia este mai importanta decat tagul.
+    Nu pierdem paragrafele individuale.
     """
 
-    if content_position < 0:
-        return []
+    paragraphs = []
 
-    if keywords_position < 0:
-        end = len(blocks)
-    else:
-        end = keywords_position
+    keywords_found = False
 
-    content = []
+    # -----------------------------------------------------
+    # Tinem evidenta daca am trecut de autori/afiliere.
+    # -----------------------------------------------------
 
-    for index in range(
-        content_position,
-        end
-    ):
+    content_started = False
 
-        block = blocks[index]
+    for element in elements:
 
-        text = clean_text(
-            block.get("text", "")
-        )
+        tag = get_tag(element)
+
+        text = element_text(element)
 
         if not text:
             continue
 
-        block_type = block.get(
-            "type"
-        )
+        # -------------------------------------------------
+        # Keywords
+        # -------------------------------------------------
 
-        # Nu introducem afilierea in continut
-        if block_type == "L":
+        if is_keywords_text(text):
+
+            keywords_found = True
+
+            break
+
+        # -------------------------------------------------
+        # Ignoram titlurile
+        # -------------------------------------------------
+
+        if tag in {"H1", "H2", "H3", "H4", "H5"}:
+
+            if text == authors:
+                continue
+
+            # Afiliere
+            if any(
+                clean_text(text) == clean_text(aff)
+                or clean_text(text).endswith(
+                    clean_text(aff)
+                )
+                for aff in affiliations
+            ):
+                continue
+
             continue
 
-        content.append(text)
+        # -------------------------------------------------
+        # Ignoram Footnote / L / LI / Lbl / LBody
+        # -----------------------------------------------------
 
-    return content
+        if tag in {
+            "Footnote",
+            "L",
+            "LI",
+            "Lbl",
+            "LBody"
+        }:
+            continue
+
+        # -------------------------------------------------
+        # Continutul este in principal P.
+        # -------------------------------------------------
+
+        if tag == "P":
+
+            # Autor
+            if clean_text(text) == clean_text(authors):
+                continue
+
+            # Afiliere
+            is_affiliation = False
+
+            for affiliation in affiliations:
+
+                if clean_text(text) == clean_text(
+                    affiliation
+                ):
+                    is_affiliation = True
+                    break
+
+            if is_affiliation:
+                continue
+
+            # Keywords
+            if is_keywords_text(text):
+                break
+
+            paragraphs.append(
+                clean_text(text)
+            )
+
+            content_started = True
+
+    # -----------------------------------------------------
+    # Eliminam duplicatele consecutive.
+    # -----------------------------------------------------
+
+    cleaned = []
+
+    for paragraph in paragraphs:
+
+        if not paragraph:
+            continue
+
+        if cleaned and paragraph == cleaned[-1]:
+            continue
+
+        cleaned.append(paragraph)
+
+    return cleaned
 
 
 # =========================================================
-# EXTRAGERE ARTICOL
+# EXTRAGERE KEYWORDS
 # =========================================================
 
-def extract_article_data(blocks):
+def extract_keywords_from_elements(elements):
     """
-    Extrage cele 5 informatii principale:
+    Cauta Keywords oriunde in blocul articolului.
 
-    1. keywords
-    2. continut
-    3. afilieri
-    4. autori
-    5. titluri
+    Poate fi:
+
+    <P>Keywords: ...</P>
+
+    sau
+
+    <H5>Keywords: ...</H5>
+
+    sau alt element text.
     """
 
-    # -----------------------------------------------------
-    # 1. KEYWORDS
-    # -----------------------------------------------------
+    for element in elements:
 
-    keywords_position = find_keywords_position(
-        blocks
-    )
+        text = element_text(element)
 
-    keywords = ""
+        if not text:
+            continue
 
-    if keywords_position >= 0:
+        if is_keywords_text(text):
 
-        keywords = clean_text(
-            blocks[
-                keywords_position
-            ].get("text", "")
-        )
+            return extract_keywords(text)
 
-    # -----------------------------------------------------
-    # 2. CONTINUT
-    # -----------------------------------------------------
+    return ""
 
-    content_position = find_content_block(
-        blocks,
-        keywords_position
-    )
+
+# =========================================================
+# PARSARE UN ARTICOL
+# =========================================================
+
+def parse_article_section(section):
+    """
+    Proceseaza un singur articol simplu.
+    """
+
+    elements = get_article_elements(section)
 
     # -----------------------------------------------------
-    # 3. AUTORI
+    # TITLURI
     # -----------------------------------------------------
 
-    authors_position = find_authors_block(
-        blocks,
-        content_position
-    )
-
-    authors = ""
-
-    if authors_position >= 0:
-
-        authors = clean_text(
-            blocks[
-                authors_position
-            ].get("text", "")
-        )
-
-    # -----------------------------------------------------
-    # 4. AFILIERI
-    # -----------------------------------------------------
-
-    affiliations = extract_affiliation_blocks(
-        blocks,
-        authors_position,
-        content_position
+    title_en, title_ro, title_candidates = (
+        extract_titles_from_block(elements)
     )
 
     # -----------------------------------------------------
-    # 5. TITLURI
+    # AUTORI
     # -----------------------------------------------------
 
-    titles = extract_titles(
-        blocks,
-        authors_position
+    authors = extract_authors(
+        elements,
+        title_candidates
     )
 
-    title_en = ""
+    # -----------------------------------------------------
+    # AFILIERI
+    # -----------------------------------------------------
 
-    title_ro = ""
+    affiliations = extract_affiliations(
+        elements
+    )
 
-    if len(titles) >= 1:
-        title_en = titles[0]
+    # -----------------------------------------------------
+    # KEYWORDS
+    # -----------------------------------------------------
 
-    if len(titles) >= 2:
-        title_ro = titles[1]
+    keywords = extract_keywords_from_elements(
+        elements
+    )
 
     # -----------------------------------------------------
     # CONTINUT
     # -----------------------------------------------------
 
-    content = extract_content(
-        blocks,
-        content_position,
-        keywords_position
+    paragraphs = extract_content(
+        elements,
+        authors,
+        affiliations
     )
 
     # -----------------------------------------------------
-    # Eliminam eventualele duplicate
+    # Eliminam eventualele texte care sunt Keywords.
     # -----------------------------------------------------
 
-    filtered_content = []
-
-    for text in content:
-
-        if authors and clean_text(text) == authors:
-            continue
-
-        if text == title_en:
-            continue
-
-        if text == title_ro:
-            continue
-
-        if is_keywords(text):
-            continue
-
-        filtered_content.append(text)
-
-    content = filtered_content
+    paragraphs = [
+        paragraph
+        for paragraph in paragraphs
+        if not is_keywords_text(paragraph)
+    ]
 
     # -----------------------------------------------------
-    # REZULTAT
+    # Rezultat
     # -----------------------------------------------------
 
     return {
         "title_en": title_en,
-
         "title_ro": title_ro,
-
-        "titles": titles,
+        "titles": [
+            title
+            for title in [title_en, title_ro]
+            if title
+        ],
 
         "authors": authors,
 
-        "affiliations": affiliations,
+        "affiliations": [
+            {
+                "number": str(index),
+                "text": affiliation
+            }
+            for index, affiliation
+            in enumerate(affiliations, start=1)
+        ],
 
-        "paragraphs": content,
+        "paragraphs": paragraphs,
 
         "keywords": keywords,
 
-        "content": content,
+        "content": paragraphs,
 
         "content_text": "\n\n".join(
-            content
+            paragraphs
         )
     }
-
-
-# =========================================================
-# IDENTIFICARE ARTICOLE
-# =========================================================
-
-def split_into_articles(blocks):
-    """
-    Imparte documentul in articole.
-
-    Pentru XML-urile de tip conferinta:
-
-        H4
-        H4
-        H5
-        ...
-        Keywords
-
-        H4
-        H4
-        ...
-
-    folosim H4 ca potential inceput de articol.
-
-    Daca doua H4 apar la inceputul aceluiasi grup,
-    ele raman impreuna si reprezinta cele doua titluri.
-    """
-
-    articles = []
-
-    current = []
-
-    content_started = False
-
-    for block in blocks:
-
-        block_type = block.get(
-            "type"
-        )
-
-        # -------------------------------------------------
-        # H4
-        # -------------------------------------------------
-
-        if block_type == "H4":
-
-            # Daca avem deja continut real,
-            # acesta este probabil articol nou.
-            if (
-                current
-                and content_started
-            ):
-
-                articles.append(
-                    current
-                )
-
-                current = []
-                content_started = False
-
-            current.append(
-                block
-            )
-
-            continue
-
-        # -------------------------------------------------
-        # Restul continutului
-        # -------------------------------------------------
-
-        if current:
-
-            current.append(
-                block
-            )
-
-            if block_type in (
-                "H5",
-                "P",
-                "L",
-                "KEYWORDS"
-            ):
-
-                content_started = True
-
-    # -----------------------------------------------------
-    # Ultimul articol
-    # -----------------------------------------------------
-
-    if current:
-
-        articles.append(
-            current
-        )
-
-    return articles
 
 
 # =========================================================
@@ -1154,22 +1169,28 @@ def parse_simple_xml(xml_path):
     """
     Parser principal pentru ARTICOLE SIMPLE.
 
-    Primeste XML-ul generat din PDF.
+    Flux:
 
-    Nu foloseste parser.py.
+    XML
+      ↓
+    detectare articole
+      ↓
+    titluri
+      ↓
+    autori
+      ↓
+    afilieri
+      ↓
+    continut
+      ↓
+    keywords
 
-    Nu foloseste builder.py.
-
-    Extrage informatia in functie de pozitia ei,
-    nu doar in functie de tagurile XML.
+    Este complet separat de parser.py.
     """
 
     try:
 
-        tree = ET.parse(
-            xml_path
-        )
-
+        tree = ET.parse(xml_path)
         root = tree.getroot()
 
     except ET.ParseError as exc:
@@ -1178,119 +1199,49 @@ def parse_simple_xml(xml_path):
             f"XML invalid sau imposibil de procesat: {exc}"
         ) from exc
 
-    # =====================================================
-    # PART-URI
-    # =====================================================
+    # -----------------------------------------------------
+    # Detectam articolele
+    # -----------------------------------------------------
 
-    parts = []
-
-    for element in root.iter():
-
-        if tag_name(element) == "Part":
-
-            parts.append(
-                element
-            )
-
-    if not parts:
-
-        parts = [
-            root
-        ]
+    article_sections = find_article_sections(
+        root
+    )
 
     articles = []
 
-    # =====================================================
-    # PROCESARE PART
-    # =====================================================
+    # -----------------------------------------------------
+    # Procesam fiecare articol
+    # -----------------------------------------------------
 
-    for part in parts:
+    for section in article_sections:
 
-        # -------------------------------------------------
-        # H2 = titlul sectiunii/conferintei
-        # -------------------------------------------------
-
-        section_title = ""
-
-        for child in part.iter():
-
-            if tag_name(child) != "H2":
-                continue
-
-            text = element_text(
-                child
-            )
-
-            if text:
-
-                section_title = text
-
-                break
-
-        # -------------------------------------------------
-        # XML -> BLOCKS
-        # -------------------------------------------------
-
-        blocks = xml_to_blocks(
-            part
-        )
-
-        # H2 nu este continutul articolului
-        blocks = remove_h2_blocks(
-            blocks
+        article = parse_article_section(
+            section
         )
 
         # -------------------------------------------------
-        # IMPARTIM IN ARTICOLE
+        # Nu pastram blocuri fara continut real.
         # -------------------------------------------------
 
-        article_groups = split_into_articles(
-            blocks
+        if not (
+            article["title_en"]
+            or article["title_ro"]
+            or article["authors"]
+            or article["affiliations"]
+            or article["paragraphs"]
+            or article["keywords"]
+        ):
+            continue
+
+        articles.append(
+            article
         )
 
-        # -------------------------------------------------
-        # PROCESAM FIECARE ARTICOL
-        # -------------------------------------------------
-
-        for article_blocks in article_groups:
-
-            if not article_blocks:
-                continue
-
-            article_data = extract_article_data(
-                article_blocks
-            )
-
-            # Pastram blocurile originale
-            article_data[
-                "blocks"
-            ] = article_blocks
-
-            article_data[
-                "section_title"
-            ] = section_title
-
-            # -------------------------------------------------
-            # Verificam daca avem un articol real
-            # -------------------------------------------------
-
-            if not (
-                article_data["title_en"]
-                or article_data["title_ro"]
-                or article_data["authors"]
-                or article_data["content"]
-                or article_data["keywords"]
-            ):
-
-                continue
-
-            articles.append(
-                article_data
-            )
-
-    # =====================================================
-    # COMPATIBILITATE
-    # =====================================================
+    # -----------------------------------------------------
+    # Compatibilitate cu builderul existent.
+    #
+    # Primul articol este pastrat si la nivel superior.
+    # -----------------------------------------------------
 
     first_article = (
         articles[0]
@@ -1299,17 +1250,10 @@ def parse_simple_xml(xml_path):
     )
 
     return {
+
         "type": "simple",
 
-        # -------------------------------------------------
-        # TOATE ARTICOLELE
-        # -------------------------------------------------
-
         "articles": articles,
-
-        # -------------------------------------------------
-        # PRIMUL ARTICOL
-        # -------------------------------------------------
 
         "title_en": first_article.get(
             "title_en",
@@ -1344,14 +1288,5 @@ def parse_simple_xml(xml_path):
         "content_text": first_article.get(
             "content_text",
             ""
-        ),
-
-        # -------------------------------------------------
-        # BLOCKS
-        # -------------------------------------------------
-
-        "blocks": first_article.get(
-            "blocks",
-            []
         )
     }
