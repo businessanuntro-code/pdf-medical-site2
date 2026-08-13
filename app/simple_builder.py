@@ -598,14 +598,15 @@ def format_content(text):
 
     REGULA:
     - text normal
-    - fara bold
-    - fara italic
-    - fara superscript
+    - NU bold
+    - NU italic
+    - NU superscript
     """
 
     return (
         '<p class="simple-paragraph" '
-        'style="font-weight: normal; font-style: normal;">'
+        'style="font-weight: 400 !important; '
+        'font-style: normal !important;">'
         f"{escape_html(text)}"
         "</p>"
     )
