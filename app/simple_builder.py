@@ -594,11 +594,18 @@ def format_keywords(text):
 
 def format_content(text):
     """
-    Continut normal.
+    Continut articol simplu.
+
+    REGULA:
+    - text normal
+    - fara bold
+    - fara italic
+    - fara superscript
     """
 
     return (
-        '<p class="simple-paragraph">'
+        '<p class="simple-paragraph" '
+        'style="font-weight: normal; font-style: normal;">'
         f"{escape_html(text)}"
         "</p>"
     )
