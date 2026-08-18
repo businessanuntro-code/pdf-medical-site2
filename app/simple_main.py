@@ -69,7 +69,13 @@ def publish_simple_article(html):
     print("RESPONSE TEXT:")
     print(response.text)
     print("============================")
-    return response.json()
+
+    raise Exception(
+    f"DEBUG SIMPLE API | "
+    f"STATUS={response.status_code} | "
+    f"URL={response.url} | "
+    f"RESPONSE={response.text[:3000]}"
+    )
 
 
 # =========================================================
