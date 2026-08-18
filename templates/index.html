@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Procesare articole</title>
+</head>
+<body>
+
+<h3>Upload XML - Procesare articol științific</h3>
+
+<form action="/upload/" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".xml">
+    <button type="submit">Upload articol științific</button>
+</form>
+
+<hr>
+
+<h3>Upload HTML - Procesare articol simplu exclus Editorial</h3>
+
+<form action="/upload-simple/" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".html">
+    <button type="submit">Upload articol simplu</button>
+</form>
+
+</body>
+</html>
