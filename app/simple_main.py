@@ -62,7 +62,19 @@ def publish_simple_article(html):
 
     response.raise_for_status()
 
-    return response.json()
+    print("===== SIMPLE API DEBUG =====")
+    print("STATUS:", response.status_code)
+    print("URL:", response.url)
+    print("CONTENT-TYPE:", response.headers.get("content-type"))
+    print("RESPONSE:")
+    print(response.text)
+    print("================================")
+
+    return {
+    "success": False,
+    "status_code": response.status_code,
+    "response": response.text
+    }
 
 
 # =========================================================
