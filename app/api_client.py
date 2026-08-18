@@ -122,4 +122,4 @@ def publish_article(data):
             "message": "Eroare la conectarea la API.",
             "error": str(e)
         }
-```
+
