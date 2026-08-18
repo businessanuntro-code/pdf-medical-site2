@@ -18,4 +18,11 @@ def publish_article(data):
 
     response.raise_for_status()
 
+    
+    print("===== SCIENTIFIC API DEBUG =====")
+    print("STATUS:", response.status_code)
+    print("URL:", response.url)
+    print("CONTENT-TYPE:", response.headers.get("content-type"))
+    print("RESPONSE:", response.text[:5000])
+    print("================================")
     return response.json()
