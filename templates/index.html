@@ -75,6 +75,21 @@
 
             margin-bottom: 25px;
 
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 25px;
+
+        }
+
+
+        .page-header-content {
+
+            flex: 1;
+
         }
 
 
@@ -98,6 +113,57 @@
             font-size: 15px;
 
             line-height: 1.5;
+
+        }
+
+
+        /* ==================================================
+           BUTON REFRESH
+           ================================================== */
+
+        .refresh-button {
+
+            flex-shrink: 0;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 7px;
+
+            padding: 11px 18px;
+
+            border: 0;
+
+            border-radius: 5px;
+
+            background: #333;
+
+            color: #fff;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            white-space: nowrap;
+
+        }
+
+
+        .refresh-button:hover {
+
+            background: #555;
+
+        }
+
+
+        .refresh-button:active {
+
+            transform: translateY(1px);
 
         }
 
@@ -644,6 +710,15 @@
             }
 
 
+            .page-header {
+
+                flex-direction: column;
+
+                align-items: stretch;
+
+            }
+
+
             .page-header h1 {
 
                 font-size: 25px;
@@ -654,6 +729,13 @@
             .processing-card h2 {
 
                 font-size: 20px;
+
+            }
+
+
+            .refresh-button {
+
+                width: 100%;
 
             }
 
@@ -700,15 +782,35 @@
 
     <header class="page-header">
 
-        <h1>
-            Procesare articole
-        </h1>
+
+        <div class="page-header-content">
+
+            <h1>
+                Procesare articole
+            </h1>
 
 
-        <p>
-            Încarcă fișierele pentru procesarea și publicarea
-            articolelor în sistemul revistei.
-        </p>
+            <p>
+                Încarcă fișierele pentru procesarea și publicarea
+                articolelor în sistemul revistei.
+            </p>
+
+        </div>
+
+
+        <!-- ==================================================
+             BUTON REFRESH
+             ================================================== -->
+
+        <button
+            type="button"
+            class="refresh-button"
+            onclick="window.location.reload();"
+            title="Împrospătează pagina"
+        >
+            ↻ Împrospătează fereastra
+        </button>
+
 
     </header>
 
@@ -834,9 +936,6 @@
                 Articolul științific a fost procesat și
                 publicat cu succes în sistem.
             </div>
-
-
-            
 
         </div>
 
@@ -998,9 +1097,6 @@
                 publicat cu succes în sistem.
             </div>
 
-
-            
-
         </div>
 
 
@@ -1097,6 +1193,7 @@
 
 
 <script>
+
 
 /* ======================================================
    FUNCȚIE GENERALĂ - PROGRES
@@ -1222,6 +1319,7 @@ function showSuccess(type)
                     prefix + 'Success'
                 )
                 .classList.add('active');
+
 
         },
         500
@@ -1648,6 +1746,7 @@ document
 
         }
     );
+
 
 </script>
 
