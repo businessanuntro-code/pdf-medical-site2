@@ -1,26 +1,608 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="ro">
+
 <head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Procesare articole</title>
+
+
+    <style>
+
+        /* ==================================================
+           GENERAL
+           ================================================== */
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            padding: 30px;
+
+            background: #ececec;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            color: #222;
+
+        }
+
+
+        /* ==================================================
+           CONTAINER PRINCIPAL
+           ================================================== */
+
+        .page-container {
+
+            width: 100%;
+
+            max-width: 1000px;
+
+            margin: 0 auto;
+
+        }
+
+
+        /* ==================================================
+           HEADER
+           ================================================== */
+
+        .page-header {
+
+            background: #fff;
+
+            padding: 30px 35px;
+
+            border-radius: 5px;
+
+            box-shadow:
+                0 0 15px rgba(0,0,0,0.08);
+
+            margin-bottom: 25px;
+
+        }
+
+
+        .page-header h1 {
+
+            margin: 0 0 10px 0;
+
+            font-size: 30px;
+
+            line-height: 1.3;
+
+        }
+
+
+        .page-header p {
+
+            margin: 0;
+
+            color: #666;
+
+            font-size: 15px;
+
+            line-height: 1.5;
+
+        }
+
+
+        /* ==================================================
+           CARDURI PROCESARE
+           ================================================== */
+
+        .processing-card {
+
+            background: #fff;
+
+            padding: 30px 35px;
+
+            border-radius: 5px;
+
+            box-shadow:
+                0 0 12px rgba(0,0,0,0.06);
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .processing-card h2 {
+
+            margin: 0 0 8px 0;
+
+            font-size: 22px;
+
+        }
+
+
+        .processing-description {
+
+            margin: 0 0 22px 0;
+
+            color: #666;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+
+        }
+
+
+        /* ==================================================
+           LABEL TIP
+           ================================================== */
+
+        .article-type {
+
+            display: inline-block;
+
+            margin-bottom: 15px;
+
+            padding: 5px 10px;
+
+            border-radius: 4px;
+
+            background: #f0f0f0;
+
+            color: #555;
+
+            font-size: 12px;
+
+            font-weight: bold;
+
+        }
+
+
+        /* ==================================================
+           FORMULAR
+           ================================================== */
+
+        .upload-form {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 15px;
+
+        }
+
+
+        /* ==================================================
+           FILE INPUT
+           ================================================== */
+
+        .file-input {
+
+            width: 100%;
+
+            padding: 12px;
+
+            border: 1px solid #ccc;
+
+            border-radius: 5px;
+
+            background: #fafafa;
+
+            font-size: 14px;
+
+            cursor: pointer;
+
+        }
+
+
+        .file-input:hover {
+
+            background: #f5f5f5;
+
+        }
+
+
+        /* ==================================================
+           BUTOANE UPLOAD
+           ================================================== */
+
+        .upload-button {
+
+            display: inline-block;
+
+            width: fit-content;
+
+            padding: 11px 20px;
+
+            border: 0;
+
+            border-radius: 5px;
+
+            background: #333;
+
+            color: #fff;
+
+            cursor: pointer;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+        }
+
+
+        .upload-button:hover {
+
+            background: #555;
+
+        }
+
+
+        /* ==================================================
+           BUTON ARTICOL SIMPLU
+           ================================================== */
+
+        .simple-button {
+
+            background: #198754;
+
+        }
+
+
+        .simple-button:hover {
+
+            background: #157347;
+
+        }
+
+
+        /* ==================================================
+           NAVIGARE
+           ================================================== */
+
+        .navigation-section {
+
+            background: #fff;
+
+            padding: 25px 35px;
+
+            border-radius: 5px;
+
+            box-shadow:
+                0 0 12px rgba(0,0,0,0.06);
+
+            margin-top: 30px;
+
+        }
+
+
+        .navigation-title {
+
+            margin: 0 0 18px 0;
+
+            font-size: 19px;
+
+        }
+
+
+        .navigation-buttons {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+
+        }
+
+
+        .navigation-button {
+
+            display: inline-block;
+
+            padding: 11px 18px;
+
+            border-radius: 5px;
+
+            background: #333;
+
+            color: #fff;
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+        }
+
+
+        .navigation-button:hover {
+
+            background: #555;
+
+        }
+
+
+        .navigation-button.simple {
+
+            background: #198754;
+
+        }
+
+
+        .navigation-button.simple:hover {
+
+            background: #157347;
+
+        }
+
+
+        /* ==================================================
+           FOOTER
+           ================================================== */
+
+        .footer {
+
+            text-align: center;
+
+            padding: 25px 0 10px 0;
+
+            color: #888;
+
+            font-size: 12px;
+
+        }
+
+
+        /* ==================================================
+           MOBILE
+           ================================================== */
+
+        @media (max-width: 700px) {
+
+            body {
+
+                padding: 10px;
+
+            }
+
+
+            .page-header,
+            .processing-card,
+            .navigation-section {
+
+                padding: 22px;
+
+            }
+
+
+            .page-header h1 {
+
+                font-size: 25px;
+
+            }
+
+
+            .processing-card h2 {
+
+                font-size: 20px;
+
+            }
+
+
+            .upload-button,
+            .navigation-button {
+
+                width: 100%;
+
+                text-align: center;
+
+            }
+
+
+            .navigation-buttons {
+
+                flex-direction: column;
+
+            }
+
+        }
+
+    </style>
+
 </head>
+
+
 <body>
 
-<h3>Upload XML - Procesare articol științific</h3>
 
-<form action="/upload/" method="post" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".xml">
-    <button type="submit">Upload articol științific</button>
-</form>
+<div class="page-container">
 
-<hr>
 
-<h3>Upload HTML - Procesare articol simplu</h3>
+    <!-- ==================================================
+         HEADER
+         ================================================== -->
 
-<form action="/upload-simple/" method="post" enctype="multipart/form-data">
-    <input type="file" name="file" accept=".html">
-    <button type="submit">Upload articol simplu</button>
-</form>
+    <header class="page-header">
+
+        <h1>
+            Procesare articole
+        </h1>
+
+        <p>
+            Încarcă fișierele pentru procesarea și publicarea
+            articolelor în sistemul revistei.
+        </p>
+
+    </header>
+
+
+    <!-- ==================================================
+         ARTICOL ȘTIINȚIFIC
+         ================================================== -->
+
+    <section class="processing-card">
+
+        <span class="article-type">
+            ARTICOL ȘTIINȚIFIC
+        </span>
+
+
+        <h2>
+            Procesare articol științific
+        </h2>
+
+
+        <p class="processing-description">
+            Încarcă fișierul XML exportat pentru procesarea
+            articolului științific.
+        </p>
+
+
+        <form
+            action="/upload/"
+            method="post"
+            enctype="multipart/form-data"
+            class="upload-form"
+        >
+
+            <input
+                type="file"
+                name="file"
+                accept=".xml"
+                class="file-input"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="upload-button"
+            >
+                Upload articol științific
+            </button>
+
+        </form>
+
+    </section>
+
+
+    <!-- ==================================================
+         ARTICOL SIMPLU
+         ================================================== -->
+
+    <section class="processing-card">
+
+        <span class="article-type">
+            ARTICOL SIMPLU
+        </span>
+
+
+        <h2>
+            Procesare articol simplu
+        </h2>
+
+
+        <p class="processing-description">
+            Încarcă fișierul HTML pentru procesarea
+            unui articol simplu.
+        </p>
+
+
+        <form
+            action="/upload-simple/"
+            method="post"
+            enctype="multipart/form-data"
+            class="upload-form"
+        >
+
+            <input
+                type="file"
+                name="file"
+                accept=".html"
+                class="file-input"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="upload-button simple-button"
+            >
+                Upload articol simplu
+            </button>
+
+        </form>
+
+    </section>
+
+
+    <!-- ==================================================
+         NAVIGARE
+         ================================================== -->
+
+    <section class="navigation-section">
+
+        <h2 class="navigation-title">
+            Acces rapid
+        </h2>
+
+
+        <div class="navigation-buttons">
+
+
+            <!-- ARTICOLE SIMPLE -->
+
+            <a
+                href="https://diaconu-daniel.ro/reviste/simple/articole/"
+                class="navigation-button simple"
+            >
+                📄 Articole simple
+            </a>
+
+
+            <!-- ARTICOLE ȘTIINȚIFICE -->
+
+            <a
+                href="https://diaconu-daniel.ro/reviste/articole.php"
+                class="navigation-button"
+            >
+                📚 Articole științifice
+            </a>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         FOOTER
+         ================================================== -->
+
+    <div class="footer">
+
+        Sistem de procesare și publicare articole
+
+    </div>
+
+
+</div>
+
 
 </body>
+
 </html>
