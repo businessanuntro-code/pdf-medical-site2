@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse
 
 import os
 import uuid
@@ -23,8 +23,15 @@ router = APIRouter()
 UPLOAD_DIR = "uploads"
 OUTPUT_DIR = "outputs"
 
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(
+    UPLOAD_DIR,
+    exist_ok=True
+)
+
+os.makedirs(
+    OUTPUT_DIR,
+    exist_ok=True
+)
 
 
 # =========================================================
@@ -88,99 +95,131 @@ def publish_simple_article(html):
 @router.post("/upload-simple/")
 async def upload_simple(file: UploadFile):
 
-    # -----------------------------------------------------
-    # 1. Generare ID unic
-    # -----------------------------------------------------
+    try:
 
-    file_id = str(uuid.uuid4())
+        # -------------------------------------------------
+        # 1. Generare ID unic
+        # -------------------------------------------------
 
-
-    # -----------------------------------------------------
-    # 2. Salvare HTML original
-    # -----------------------------------------------------
-
-    html_path = f"{UPLOAD_DIR}/{file_id}.html"
-
-    content = await file.read()
-
-    with open(
-        html_path,
-        "wb"
-    ) as f:
-
-        f.write(content)
-
-
-    # -----------------------------------------------------
-    # 3. PARSER - ARTICOL SIMPLU
-    # -----------------------------------------------------
-
-    data = parse_simple_html(
-        html_path
-    )
-
-
-    # -----------------------------------------------------
-    # 4. BUILDER - ARTICOL SIMPLU
-    # -----------------------------------------------------
-
-    html = build_simple_html(
-        data
-    )
-
-
-    # -----------------------------------------------------
-    # 5. Salvare HTML rezultat
-    # -----------------------------------------------------
-
-    output_path = (
-        f"{OUTPUT_DIR}/{file_id}.html"
-    )
-
-    with open(
-        output_path,
-        "w",
-        encoding="utf-8"
-    ) as f:
-
-        f.write(html)
-
-
-    # -----------------------------------------------------
-    # 6. INJECTARE IN DB
-    # -----------------------------------------------------
-
-    result = publish_simple_article(
-        html
-    )
-
-
-    # -----------------------------------------------------
-    # 7. Verificare raspuns API
-    # -----------------------------------------------------
-
-    if not result.get("success"):
-
-        raise Exception(
-            result.get(
-                "message",
-                "Articolul simplu nu a putut fi salvat."
-            )
+        file_id = str(
+            uuid.uuid4()
         )
 
 
-    # -----------------------------------------------------
-    # 8. ID ARTICOL DIN DB
-    # -----------------------------------------------------
+        # -------------------------------------------------
+        # 2. Salvare HTML original
+        # -------------------------------------------------
 
-    article_id = result.get("id")
+        html_path = (
+            f"{UPLOAD_DIR}/{file_id}.html"
+        )
+
+        content = await file.read()
 
 
-    # -----------------------------------------------------
-    # 9. Redirect
-    # -----------------------------------------------------
+        with open(
+            html_path,
+            "wb"
+        ) as f:
 
-    return RedirectResponse(
-        url=f"/article/{file_id}",
-        status_code=302
-    )
+            f.write(content)
+
+
+        # -------------------------------------------------
+        # 3. PARSER - ARTICOL SIMPLU
+        # -------------------------------------------------
+
+        data = parse_simple_html(
+            html_path
+        )
+
+
+        # -------------------------------------------------
+        # 4. BUILDER - ARTICOL SIMPLU
+        # -------------------------------------------------
+
+        html = build_simple_html(
+            data
+        )
+
+
+        # -------------------------------------------------
+        # 5. Salvare HTML rezultat
+        # -------------------------------------------------
+
+        output_path = (
+            f"{OUTPUT_DIR}/{file_id}.html"
+        )
+
+
+        with open(
+            output_path,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            f.write(html)
+
+
+        # -------------------------------------------------
+        # 6. INJECTARE IN DB
+        # -------------------------------------------------
+
+        result = publish_simple_article(
+            html
+        )
+
+
+        # -------------------------------------------------
+        # 7. Verificare raspuns API
+        # -------------------------------------------------
+
+        if not result.get("success"):
+
+            raise Exception(
+                result.get(
+                    "message",
+                    "Articolul simplu nu a putut fi salvat."
+                )
+            )
+
+
+        # -------------------------------------------------
+        # 8. ID ARTICOL DIN DB
+        # -------------------------------------------------
+
+        article_id = result.get(
+            "id"
+        )
+
+
+        # -------------------------------------------------
+        # 9. RASPUNS JSON
+        #
+        # NU MAI FACEM REDIRECT
+        # CATRE /article/{file_id}
+        # -------------------------------------------------
+
+        return JSONResponse(
+            {
+                "success": True,
+                "file_id": file_id,
+                "article_id": article_id,
+                "message": "Articol simplu procesat cu succes."
+            }
+        )
+
+
+    except Exception as e:
+
+        # -------------------------------------------------
+        # EROARE
+        # -------------------------------------------------
+
+        return JSONResponse(
+            {
+                "success": False,
+                "message": str(e)
+            },
+            status_code=500
+        )
