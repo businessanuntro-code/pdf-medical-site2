@@ -250,11 +250,18 @@
         }
 
 
-        /*
-         * ARTICOL SIMPLU
-         *
-         * Aceeasi culoare ca articolul stiintific.
-         */
+        .upload-button:disabled {
+
+            background: #999;
+
+            cursor: not-allowed;
+
+        }
+
+
+        /* ==================================================
+           ARTICOL SIMPLU
+           ================================================== */
 
         .simple-button {
 
@@ -266,6 +273,252 @@
         .simple-button:hover {
 
             background: #555;
+
+        }
+
+
+        /* ==================================================
+           ZONA PROGRES
+           ================================================== */
+
+        .progress-container {
+
+            display: none;
+
+            margin-top: 20px;
+
+            padding: 20px;
+
+            background: #fafafa;
+
+            border: 1px solid #ddd;
+
+            border-radius: 5px;
+
+        }
+
+
+        .progress-container.active {
+
+            display: block;
+
+        }
+
+
+        .progress-header {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-bottom: 10px;
+
+            gap: 15px;
+
+        }
+
+
+        .progress-title {
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            color: #333;
+
+        }
+
+
+        .progress-percent {
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            color: #555;
+
+        }
+
+
+        .progress-bar {
+
+            width: 100%;
+
+            height: 20px;
+
+            background: #e5e5e5;
+
+            border-radius: 10px;
+
+            overflow: hidden;
+
+        }
+
+
+        .progress-fill {
+
+            width: 0%;
+
+            height: 100%;
+
+            background: #333;
+
+            border-radius: 10px;
+
+            transition: width 0.4s ease;
+
+        }
+
+
+        .progress-status {
+
+            margin-top: 10px;
+
+            color: #666;
+
+            font-size: 13px;
+
+        }
+
+
+        /* ==================================================
+           SUCCES
+           ================================================== */
+
+        .success-message {
+
+            display: none;
+
+            margin-top: 20px;
+
+            padding: 20px;
+
+            background: #f5f5f5;
+
+            border: 1px solid #bbb;
+
+            border-radius: 5px;
+
+        }
+
+
+        .success-message.active {
+
+            display: block;
+
+        }
+
+
+        .success-title {
+
+            margin-bottom: 8px;
+
+            font-size: 18px;
+
+            font-weight: bold;
+
+            color: #198754;
+
+        }
+
+
+        .success-text {
+
+            margin-bottom: 15px;
+
+            color: #555;
+
+            font-size: 14px;
+
+        }
+
+
+        .back-processing-button {
+
+            display: inline-block;
+
+            padding: 10px 18px;
+
+            border-radius: 5px;
+
+            background: #333;
+
+            color: #fff;
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            border: 0;
+
+        }
+
+
+        .back-processing-button:hover {
+
+            background: #555;
+
+        }
+
+
+        /* ==================================================
+           EROARE
+           ================================================== */
+
+        .error-message {
+
+            display: none;
+
+            margin-top: 20px;
+
+            padding: 20px;
+
+            background: #fafafa;
+
+            border: 1px solid #bbb;
+
+            border-radius: 5px;
+
+        }
+
+
+        .error-message.active {
+
+            display: block;
+
+        }
+
+
+        .error-title {
+
+            margin-bottom: 8px;
+
+            font-size: 18px;
+
+            font-weight: bold;
+
+            color: #b00000;
+
+        }
+
+
+        .error-text {
+
+            margin-bottom: 15px;
+
+            color: #555;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+
+            word-break: break-word;
 
         }
 
@@ -337,11 +590,6 @@
 
         }
 
-
-        /*
-         * Ambele butoane de navigare
-         * au aceeasi culoare.
-         */
 
         .navigation-button.simple {
 
@@ -426,6 +674,13 @@
 
             }
 
+
+            .progress-header {
+
+                align-items: flex-start;
+
+            }
+
         }
 
     </style>
@@ -462,7 +717,10 @@
          ARTICOL ȘTIINȚIFIC
          ================================================== -->
 
-    <section class="processing-card">
+    <section
+        class="processing-card"
+        id="scientificCard"
+    >
 
         <span class="article-type">
             ARTICOL ȘTIINȚIFIC
@@ -481,6 +739,7 @@
 
 
         <form
+            id="scientificForm"
             action="/upload/"
             method="post"
             enctype="multipart/form-data"
@@ -492,6 +751,7 @@
                 name="file"
                 accept=".xml"
                 class="file-input"
+                id="scientificFile"
                 required
             >
 
@@ -499,11 +759,125 @@
             <button
                 type="submit"
                 class="upload-button"
+                id="scientificButton"
             >
                 Upload articol științific
             </button>
 
         </form>
+
+
+        <!-- ==================================================
+             PROGRES ȘTIINȚIFIC
+             ================================================== -->
+
+        <div
+            class="progress-container"
+            id="scientificProgress"
+        >
+
+            <div class="progress-header">
+
+                <div
+                    class="progress-title"
+                    id="scientificProgressTitle"
+                >
+                    Se procesează articolul...
+                </div>
+
+
+                <div
+                    class="progress-percent"
+                    id="scientificProgressPercent"
+                >
+                    0%
+                </div>
+
+            </div>
+
+
+            <div class="progress-bar">
+
+                <div
+                    class="progress-fill"
+                    id="scientificProgressFill"
+                ></div>
+
+            </div>
+
+
+            <div
+                class="progress-status"
+                id="scientificProgressStatus"
+            >
+                Se pregătește fișierul...
+            </div>
+
+        </div>
+
+
+        <!-- ==================================================
+             SUCCES ȘTIINȚIFIC
+             ================================================== -->
+
+        <div
+            class="success-message"
+            id="scientificSuccess"
+        >
+
+            <div class="success-title">
+                ✓ Articol procesat cu succes!
+            </div>
+
+
+            <div class="success-text">
+                Articolul științific a fost procesat și
+                publicat cu succes în sistem.
+            </div>
+
+
+            <button
+                type="button"
+                class="back-processing-button"
+                onclick="resetProcessing('scientific')"
+            >
+                ← Înapoi la pagina de procesare
+            </button>
+
+        </div>
+
+
+        <!-- ==================================================
+             EROARE ȘTIINȚIFICĂ
+             ================================================== -->
+
+        <div
+            class="error-message"
+            id="scientificError"
+        >
+
+            <div class="error-title">
+                ✕ A apărut o eroare
+            </div>
+
+
+            <div
+                class="error-text"
+                id="scientificErrorText"
+            >
+                Articolul nu a putut fi procesat.
+            </div>
+
+
+            <button
+                type="button"
+                class="back-processing-button"
+                onclick="resetProcessing('scientific')"
+            >
+                ← Încearcă din nou
+            </button>
+
+        </div>
 
     </section>
 
@@ -512,7 +886,10 @@
          ARTICOL SIMPLU
          ================================================== -->
 
-    <section class="processing-card">
+    <section
+        class="processing-card"
+        id="simpleCard"
+    >
 
         <span class="article-type">
             ARTICOL SIMPLU
@@ -531,6 +908,7 @@
 
 
         <form
+            id="simpleForm"
             action="/upload-simple/"
             method="post"
             enctype="multipart/form-data"
@@ -542,6 +920,7 @@
                 name="file"
                 accept=".html"
                 class="file-input"
+                id="simpleFile"
                 required
             >
 
@@ -549,11 +928,125 @@
             <button
                 type="submit"
                 class="upload-button simple-button"
+                id="simpleButton"
             >
                 Upload articol simplu
             </button>
 
         </form>
+
+
+        <!-- ==================================================
+             PROGRES SIMPLU
+             ================================================== -->
+
+        <div
+            class="progress-container"
+            id="simpleProgress"
+        >
+
+            <div class="progress-header">
+
+                <div
+                    class="progress-title"
+                    id="simpleProgressTitle"
+                >
+                    Se procesează articolul...
+                </div>
+
+
+                <div
+                    class="progress-percent"
+                    id="simpleProgressPercent"
+                >
+                    0%
+                </div>
+
+            </div>
+
+
+            <div class="progress-bar">
+
+                <div
+                    class="progress-fill"
+                    id="simpleProgressFill"
+                ></div>
+
+            </div>
+
+
+            <div
+                class="progress-status"
+                id="simpleProgressStatus"
+            >
+                Se pregătește fișierul...
+            </div>
+
+        </div>
+
+
+        <!-- ==================================================
+             SUCCES SIMPLU
+             ================================================== -->
+
+        <div
+            class="success-message"
+            id="simpleSuccess"
+        >
+
+            <div class="success-title">
+                ✓ Articol procesat cu succes!
+            </div>
+
+
+            <div class="success-text">
+                Articolul simplu a fost procesat și
+                publicat cu succes în sistem.
+            </div>
+
+
+            <button
+                type="button"
+                class="back-processing-button"
+                onclick="resetProcessing('simple')"
+            >
+                ← Înapoi la pagina de procesare
+            </button>
+
+        </div>
+
+
+        <!-- ==================================================
+             EROARE SIMPLU
+             ================================================== -->
+
+        <div
+            class="error-message"
+            id="simpleError"
+        >
+
+            <div class="error-title">
+                ✕ A apărut o eroare
+            </div>
+
+
+            <div
+                class="error-text"
+                id="simpleErrorText"
+            >
+                Articolul nu a putut fi procesat.
+            </div>
+
+
+            <button
+                type="button"
+                class="back-processing-button"
+                onclick="resetProcessing('simple')"
+            >
+                ← Încearcă din nou
+            </button>
+
+        </div>
 
     </section>
 
@@ -572,10 +1065,7 @@
         <div class="navigation-buttons">
 
 
-            <!-- ==================================================
-                 ARTICOLE SIMPLE
-                 DESCHIDERE IN FEREASTRA / FILA NOUA
-                 ================================================== -->
+            <!-- ARTICOLE SIMPLE -->
 
             <a
                 href="https://diaconu-daniel.ro/reviste/simple/articole/"
@@ -587,10 +1077,7 @@
             </a>
 
 
-            <!-- ==================================================
-                 ARTICOLE ȘTIINȚIFICE
-                 DESCHIDERE IN FEREASTRA / FILA NOUA
-                 ================================================== -->
+            <!-- ARTICOLE ȘTIINȚIFICE -->
 
             <a
                 href="https://diaconu-daniel.ro/reviste/articole.php"
@@ -619,6 +1106,562 @@
 
 
 </div>
+
+
+<script>
+
+/* ======================================================
+   FUNCȚIE GENERALĂ - PROGRES
+   ====================================================== */
+
+function setProgress(type, percent, status)
+{
+
+    const prefix =
+        type === 'scientific'
+            ? 'scientific'
+            : 'simple';
+
+
+    const fill =
+        document.getElementById(
+            prefix + 'ProgressFill'
+        );
+
+
+    const percentElement =
+        document.getElementById(
+            prefix + 'ProgressPercent'
+        );
+
+
+    const statusElement =
+        document.getElementById(
+            prefix + 'ProgressStatus'
+        );
+
+
+    fill.style.width =
+        percent + '%';
+
+
+    percentElement.textContent =
+        percent + '%';
+
+
+    statusElement.textContent =
+        status;
+
+}
+
+
+/* ======================================================
+   AFIȘARE PROGRES
+   ====================================================== */
+
+function showProgress(type)
+{
+
+    const prefix =
+        type === 'scientific'
+            ? 'scientific'
+            : 'simple';
+
+
+    document
+        .getElementById(
+            prefix + 'Progress'
+        )
+        .classList.add('active');
+
+
+    document
+        .getElementById(
+            prefix + 'Success'
+        )
+        .classList.remove('active');
+
+
+    document
+        .getElementById(
+            prefix + 'Error'
+        )
+        .classList.remove('active');
+
+
+    setProgress(
+        type,
+        0,
+        'Se pregătește fișierul...'
+    );
+
+}
+
+
+/* ======================================================
+   SUCCES
+   ====================================================== */
+
+function showSuccess(type)
+{
+
+    const prefix =
+        type === 'scientific'
+            ? 'scientific'
+            : 'simple';
+
+
+    setProgress(
+        type,
+        100,
+        'Procesarea a fost finalizată.'
+    );
+
+
+    setTimeout(
+        function()
+        {
+
+            document
+                .getElementById(
+                    prefix + 'Progress'
+                )
+                .classList.remove('active');
+
+
+            document
+                .getElementById(
+                    prefix + 'Success'
+                )
+                .classList.add('active');
+
+        },
+        500
+    );
+
+}
+
+
+/* ======================================================
+   EROARE
+   ====================================================== */
+
+function showError(type, message)
+{
+
+    const prefix =
+        type === 'scientific'
+            ? 'scientific'
+            : 'simple';
+
+
+    document
+        .getElementById(
+            prefix + 'Progress'
+        )
+        .classList.remove('active');
+
+
+    document
+        .getElementById(
+            prefix + 'ErrorText'
+        )
+        .textContent =
+            message ||
+            'Articolul nu a putut fi procesat.';
+
+
+    document
+        .getElementById(
+            prefix + 'Error'
+        )
+        .classList.add('active');
+
+}
+
+
+/* ======================================================
+   RESET
+   ====================================================== */
+
+function resetProcessing(type)
+{
+
+    const prefix =
+        type === 'scientific'
+            ? 'scientific'
+            : 'simple';
+
+
+    document
+        .getElementById(
+            prefix + 'Progress'
+        )
+        .classList.remove('active');
+
+
+    document
+        .getElementById(
+            prefix + 'Success'
+        )
+        .classList.remove('active');
+
+
+    document
+        .getElementById(
+            prefix + 'Error'
+        )
+        .classList.remove('active');
+
+
+    document
+        .getElementById(
+            prefix + 'Form'
+        )
+        .reset();
+
+
+    document
+        .getElementById(
+            prefix + 'Button'
+        )
+        .disabled = false;
+
+
+    setProgress(
+        type,
+        0,
+        'Se pregătește fișierul...'
+    );
+
+}
+
+
+/* ======================================================
+   PROGRES ANIMAT
+   ====================================================== */
+
+function simulateProgress(type)
+{
+
+    let progress = 0;
+
+
+    setProgress(
+        type,
+        5,
+        'Se încarcă fișierul...'
+    );
+
+
+    const interval =
+        setInterval(
+            function()
+            {
+
+                if (progress < 25) {
+
+                    progress += 5;
+
+                    setProgress(
+                        type,
+                        progress,
+                        'Se salvează fișierul...'
+                    );
+
+                }
+
+                else if (progress < 50) {
+
+                    progress += 3;
+
+                    setProgress(
+                        type,
+                        progress,
+                        'Se procesează fișierul...'
+                    );
+
+                }
+
+                else if (progress < 75) {
+
+                    progress += 2;
+
+                    setProgress(
+                        type,
+                        progress,
+                        'Se generează conținutul...'
+                    );
+
+                }
+
+                else if (progress < 90) {
+
+                    progress += 1;
+
+                    setProgress(
+                        type,
+                        progress,
+                        'Se publică articolul...'
+                    );
+
+                }
+
+                else {
+
+                    clearInterval(
+                        interval
+                    );
+
+                }
+
+            },
+            180
+        );
+
+
+    return interval;
+
+}
+
+
+/* ======================================================
+   UPLOAD GENERAL
+   ====================================================== */
+
+async function processUpload(
+    type,
+    form
+)
+{
+
+    const prefix =
+        type === 'scientific'
+            ? 'scientific'
+            : 'simple';
+
+
+    const button =
+        document.getElementById(
+            prefix + 'Button'
+        );
+
+
+    const fileInput =
+        document.getElementById(
+            prefix + 'File'
+        );
+
+
+    const file =
+        fileInput.files[0];
+
+
+    if (!file) {
+
+        alert(
+            'Selectează mai întâi un fișier.'
+        );
+
+        return;
+
+    }
+
+
+    /* --------------------------------------------------
+       Pregătire
+       -------------------------------------------------- */
+
+    button.disabled = true;
+
+
+    showProgress(
+        type
+    );
+
+
+    const progressInterval =
+        simulateProgress(
+            type
+        );
+
+
+    /* --------------------------------------------------
+       FormData
+       -------------------------------------------------- */
+
+    const formData =
+        new FormData();
+
+
+    formData.append(
+        'file',
+        file
+    );
+
+
+    try {
+
+
+        /* ----------------------------------------------
+           Upload
+           ---------------------------------------------- */
+
+        const response =
+            await fetch(
+                form.action,
+                {
+                    method: 'POST',
+                    body: formData
+                }
+            );
+
+
+        /* ----------------------------------------------
+           Citim răspunsul
+           ---------------------------------------------- */
+
+        const text =
+            await response.text();
+
+
+        let data;
+
+
+        try {
+
+            data =
+                JSON.parse(text);
+
+        }
+
+        catch (jsonError) {
+
+            throw new Error(
+                'Serverul nu a returnat un răspuns JSON valid.'
+            );
+
+        }
+
+
+        /* ----------------------------------------------
+           Oprim progresul animat
+           ---------------------------------------------- */
+
+        clearInterval(
+            progressInterval
+        );
+
+
+        /* ----------------------------------------------
+           Verificare succes
+           ---------------------------------------------- */
+
+        if (
+            response.ok &&
+            data.success
+        ) {
+
+            showSuccess(
+                type
+            );
+
+
+            return;
+
+        }
+
+
+        /* ----------------------------------------------
+           Eroare API
+           ---------------------------------------------- */
+
+        throw new Error(
+            data.message ||
+            'Articolul nu a putut fi procesat.'
+        );
+
+
+    }
+
+    catch (error) {
+
+
+        clearInterval(
+            progressInterval
+        );
+
+
+        console.error(
+            'Upload error:',
+            error
+        );
+
+
+        showError(
+            type,
+            error.message
+        );
+
+
+        button.disabled =
+            false;
+
+    }
+
+}
+
+
+/* ======================================================
+   FORMULAR ARTICOL ȘTIINȚIFIC
+   ====================================================== */
+
+document
+    .getElementById(
+        'scientificForm'
+    )
+    .addEventListener(
+        'submit',
+        function(event)
+        {
+
+            event.preventDefault();
+
+
+            processUpload(
+                'scientific',
+                this
+            );
+
+        }
+    );
+
+
+/* ======================================================
+   FORMULAR ARTICOL SIMPLU
+   ====================================================== */
+
+document
+    .getElementById(
+        'simpleForm'
+    )
+    .addEventListener(
+        'submit',
+        function(event)
+        {
+
+            event.preventDefault();
+
+
+            processUpload(
+                'simple',
+                this
+            );
+
+        }
+    );
+
+</script>
 
 
 </body>
